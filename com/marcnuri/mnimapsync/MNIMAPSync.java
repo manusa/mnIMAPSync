@@ -14,8 +14,16 @@
  */
 package com.marcnuri.mnimapsync;
 
+import com.marcnuri.mnimapsync.store.StoreIndex;
+import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
+import com.sun.mail.imap.IMAPSSLStore;
+import com.sun.mail.imap.IMAPStore;
 import java.io.Serializable;
-import java.util.UUID;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.mail.MessagingException;
+import javax.mail.Session;
 
 /**
  *
@@ -26,6 +34,7 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
+    public static final int THREADS = 20;
     private final SyncOptions syncOptions;
 
 //**************************************************************************************************
@@ -44,6 +53,50 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Other Methods
 //**************************************************************************************************
+    public final void sync() {
+        for (HostDefinition def : new HostDefinition[]{syncOptions.host1/*, syncOptions.host2*/}) {
+            final IMAPStore s;
+            try {
+                s = openStore(def);
+                final StoreIndex temp = StoreIndex.getInstance(s, def);
+                s.close();
+            } catch (MessagingException ex) {
+                Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
+    }
+
+    /**
+     * Open an {@link IMAPStore} for the provided {@link HostDefinition}
+     *
+     * @param host
+     * @return
+     * @throws MessagingException
+     */
+    private IMAPStore openStore(HostDefinition host) throws MessagingException {
+        final Properties properties = new Properties();
+        properties.put("mail.imap.starttls.enable", true);
+        properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(THREADS));
+        if (host.isSsl()) {
+            properties.put("mail.imap.ssl.enable", host.isSsl());
+            properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(THREADS));
+            properties.put("mail.imaps.socketFactory.port", host.getPort());
+            properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
+                    getName());
+            properties.put("mail.imaps.socketFactory.fallback", false);
+        }
+        final Session session = Session.getInstance(properties, null);
+        final IMAPStore ret;
+        if (host.isSsl()) {
+            ret = (IMAPSSLStore) session.getStore("imaps");
+        } else {
+            ret = (IMAPStore) session.getStore("imap");
+        }
+        ret.connect(host.getHost(), host.getPort(), host.getUser(), host.getPassword());
+        return ret;
+    }
+
 //**************************************************************************************************
 //  Getter/Setter Methods
 //**************************************************************************************************
@@ -57,6 +110,7 @@ public class MNIMAPSync {
 
         try {
             final MNIMAPSync sync = new MNIMAPSync(parseArgs(args, new SyncOptions(), 0));
+            sync.sync();
             System.out.println("Finished");
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
@@ -67,33 +121,33 @@ public class MNIMAPSync {
         while (current < args.length) {
             final String arg = args[current++];
             if (arg.equals("--host1")) {
-                options.setHost1(args[current++]);
+                options.getHost1().setHost(args[current++]);
             } else if (arg.equals("--port1")) {
                 try {
-                    options.setPort1(Integer.parseInt(args[current++]));
+                    options.getHost1().setPort(Integer.parseInt(args[current++]));
                 } catch (NumberFormatException numberFormatException) {
                     throw new IllegalArgumentException("Port1 should be an integer");
                 }
             } else if (arg.equals("--user1")) {
-                options.setUser1(args[current++]);
+                options.getHost1().setUser(args[current++]);
             } else if (arg.equals("--password1")) {
-                options.setPassword1(args[current++]);
+                options.getHost1().setPassword(args[current++]);
             } else if (arg.equals("--ssl1")) {
-                options.setSsl1(true);
+                options.getHost1().setSsl(true);
             } else if (arg.equals("--host2")) {
-                options.setHost2(args[current++]);
+                options.getHost2().setHost(args[current++]);
             } else if (arg.equals("--port2")) {
                 try {
-                    options.setPort2(Integer.parseInt(args[current++]));
+                    options.getHost2().setPort(Integer.parseInt(args[current++]));
                 } catch (NumberFormatException numberFormatException) {
                     throw new IllegalArgumentException("Port2 should be an integer");
                 }
             } else if (arg.equals("--user2")) {
-                options.setUser2(args[current++]);
+                options.getHost2().setUser(args[current++]);
             } else if (arg.equals("--password2")) {
-                options.setPassword2(args[current++]);
+                options.getHost2().setPassword(args[current++]);
             } else if (arg.equals("--ssl2")) {
-                options.setSsl2(true);
+                options.getHost2().setSsl(true);
             } else {
                 throw new IllegalArgumentException("Unrecognized argument: " + arg);
             }
@@ -107,28 +161,27 @@ public class MNIMAPSync {
     public static final class SyncOptions implements Serializable {
 
         private static final long serialVersionUID = 1L;
-        private final UUID id;
-        private String host1;
-        private int port1;
-        private String user1;
-        private String password1;
-        private boolean ssl1;
-        private String host2;
-        private int port2;
-        private String user2;
-        private String password2;
-        private boolean ssl2;
+        private final HostDefinition host1;
+        private final HostDefinition host2;
 
         public SyncOptions() {
-            this.id = UUID.randomUUID();
+            this.host1 = new HostDefinition();
+            this.host2 = new HostDefinition();
+        }
+
+        public HostDefinition getHost1() {
+            return host1;
+        }
+
+        public HostDefinition getHost2() {
+            return host2;
         }
 
         @Override
         public int hashCode() {
-            int hash = 7;
-            hash = 53 * hash + (this.id != null ? this.id.hashCode() : 0);
-            hash = 53 * hash + (this.host1 != null ? this.host1.hashCode() : 0);
-            hash = 53 * hash + (this.host2 != null ? this.host2.hashCode() : 0);
+            int hash = 5;
+            hash = 79 * hash + (this.host1 != null ? this.host1.hashCode() : 0);
+            hash = 79 * hash + (this.host2 != null ? this.host2.hashCode() : 0);
             return hash;
         }
 
@@ -141,97 +194,15 @@ public class MNIMAPSync {
                 return false;
             }
             final SyncOptions other = (SyncOptions) obj;
-            if (this.id != other.id && (this.id == null || !this.id.equals(other.id))) {
+            if (this.host1 != other.host1 && (this.host1 == null || !this.host1.equals(other.host1))) {
                 return false;
             }
-            if ((this.host1 == null) ? (other.host1 != null) : !this.host1.equals(other.host1)) {
-                return false;
-            }
-            if ((this.host2 == null) ? (other.host2 != null) : !this.host2.equals(other.host2)) {
+            if (this.host2 != other.host2 && (this.host2 == null || !this.host2.equals(other.host2))) {
                 return false;
             }
             return true;
         }
 
-        public String getHost1() {
-            return host1;
-        }
-
-        public void setHost1(String host1) {
-            this.host1 = host1;
-        }
-
-        public int getPort1() {
-            return port1;
-        }
-
-        public void setPort1(int port1) {
-            this.port1 = port1;
-        }
-
-        public String getUser1() {
-            return user1;
-        }
-
-        public void setUser1(String user1) {
-            this.user1 = user1;
-        }
-
-        public String getPassword1() {
-            return password1;
-        }
-
-        public void setPassword1(String password1) {
-            this.password1 = password1;
-        }
-
-        public boolean isSsl1() {
-            return ssl1;
-        }
-
-        public void setSsl1(boolean ssl1) {
-            this.ssl1 = ssl1;
-        }
-
-        public String getHost2() {
-            return host2;
-        }
-
-        public void setHost2(String host2) {
-            this.host2 = host2;
-        }
-
-        public int getPort2() {
-            return port2;
-        }
-
-        public void setPort2(int port2) {
-            this.port2 = port2;
-        }
-
-        public String getUser2() {
-            return user2;
-        }
-
-        public void setUser2(String user2) {
-            this.user2 = user2;
-        }
-
-        public String getPassword2() {
-            return password2;
-        }
-
-        public void setPassword2(String password2) {
-            this.password2 = password2;
-        }
-
-        public boolean isSsl2() {
-            return ssl2;
-        }
-
-        public void setSsl2(boolean ssl2) {
-            this.ssl2 = ssl2;
-        }
-
     }
+
 }
