@@ -16,6 +16,7 @@ package com.marcnuri.mnimapsync;
 
 import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
+import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import java.io.Serializable;
@@ -34,7 +35,9 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS = 20;
+    public static final int THREADS = 5;
+    public static final int BATCH_SIZE = 200;
+    public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
 
 //**************************************************************************************************
@@ -54,14 +57,30 @@ public class MNIMAPSync {
 //  Other Methods
 //**************************************************************************************************
     public final void sync() {
-        for (HostDefinition def : new HostDefinition[]{syncOptions.host1/*, syncOptions.host2*/}) {
-            final IMAPStore s;
-            try {
-                s = openStore(def);
-                final StoreIndex temp = StoreIndex.getInstance(s, def);
-                s.close();
-            } catch (MessagingException ex) {
-                Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
+        IMAPStore targetStore = null;
+        IMAPStore sourceStore = null;
+        try {
+            targetStore = openStore(syncOptions.host2);
+            final StoreIndex targetIndex = StoreIndex.getInstance(targetStore);
+            sourceStore = openStore(syncOptions.host1);
+            final StoreCopier sourceCopier = new StoreCopier(sourceStore, targetStore, targetIndex);
+            sourceCopier.copy();
+        } catch (MessagingException ex) {
+            Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (targetStore != null && targetStore.isConnected()) {
+                try {
+                    targetStore.close();
+                } catch (MessagingException ex) {
+                }
+            }
+            if (sourceStore != null && sourceStore.isConnected()) {
+                try {
+                    sourceStore.close();
+                } catch (MessagingException ex) {
+                }
             }
 
         }

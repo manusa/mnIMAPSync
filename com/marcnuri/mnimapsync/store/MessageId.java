@@ -19,6 +19,7 @@ import java.util.Arrays;
 import javax.mail.Address;
 
 /**
+ * Class to create a reusable message ID for maps and comparisons
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */
@@ -37,10 +38,10 @@ public class MessageId implements Serializable {
 //  Constructors
 //**************************************************************************************************
     public MessageId(String messageId, Address[] from, Address[] to, String subject) {
-        this.messageId = messageId;
+        this.messageId = messageId.trim();
         this.from = from;
         this.to = to;
-        this.subject = subject;
+        this.subject = subject.replaceAll("[^a-zA-Z1-9\\\\.\\\\-]", "");
     }
 
 //**************************************************************************************************
@@ -51,11 +52,11 @@ public class MessageId implements Serializable {
 //**************************************************************************************************
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 13 * hash + (this.messageId != null ? this.messageId.hashCode() : 0);
-        hash = 13 * hash + Arrays.deepHashCode(this.from);
-        hash = 13 * hash + Arrays.deepHashCode(this.to);
-        hash = 13 * hash + (this.subject != null ? this.subject.hashCode() : 0);
+        int hash = 7;
+        hash = 97 * hash + (this.messageId != null ? this.messageId.hashCode() : 0);
+        hash = 97 * hash + Arrays.deepHashCode(this.from);
+        hash = 97 * hash + Arrays.deepHashCode(this.to);
+        hash = 97 * hash + (this.subject != null ? this.subject.hashCode() : 0);
         return hash;
     }
 

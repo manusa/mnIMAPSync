@@ -14,25 +14,19 @@
  */
 package com.marcnuri.mnimapsync.store;
 
-import com.marcnuri.mnimapsync.HostDefinition;
 import com.marcnuri.mnimapsync.MNIMAPSync;
-import com.marcnuri.mnimapsync.store.MessageId;
-import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.mail.FetchProfile;
 import javax.mail.Folder;
-import javax.mail.Message;
 import javax.mail.MessagingException;
 
 /**
@@ -44,21 +38,20 @@ public class StoreIndex {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    private final HostDefinition hostDefinition;
     private final List<String> folders;
-    private final Map<String, List<Message>> folderMessages;
-    private final Map<MessageId, Message> messageIndex;
+    private final Map<String, Set<MessageId>> folderMessages;
     private long messageCount;
+    //If true, the other process shouldn't continue
+    private final List<MessagingException> crawlExceptions;
 
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
-    private StoreIndex(HostDefinition hostDefinition) {
-        this.hostDefinition = hostDefinition;
+    private StoreIndex() {
         this.folders = Collections.synchronizedList(new ArrayList<String>());
-        this.folderMessages = Collections.synchronizedMap(new HashMap<String, List<Message>>());
-        this.messageIndex = Collections.synchronizedMap(new HashMap<MessageId, Message>());
+        this.folderMessages = Collections.synchronizedMap(new HashMap<String, Set<MessageId>>());
         this.messageCount = 0;
+        this.crawlExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
     }
 
 //**************************************************************************************************
@@ -66,6 +59,18 @@ public class StoreIndex {
 //**************************************************************************************************
 //**************************************************************************************************
 //  Overridden Methods
+//**************************************************************************************************
+//**************************************************************************************************
+//  Other Methods
+//**************************************************************************************************
+    public final boolean hasCrawlException() {
+        synchronized (crawlExceptions) {
+            return crawlExceptions.isEmpty();
+        }
+    }
+
+//**************************************************************************************************
+//  Getter/Setter Methods
 //**************************************************************************************************
     public final synchronized List<String> getFolders() {
         return folders;
@@ -79,107 +84,95 @@ public class StoreIndex {
         this.messageCount = messageCount;
     }
 
-    public final synchronized Map<String, List<Message>> getFolderMessages() {
-        return folderMessages;
+    public synchronized Set<MessageId> getFolderMessages(String folder) {
+        synchronized (folderMessages) {
+            if (!folderMessages.containsKey(folder)) {
+                folderMessages.put(folder, Collections.synchronizedSet(new HashSet<MessageId>()));
+            }
+            return folderMessages.get(folder);
+        }
     }
 
-    public final synchronized Map<MessageId, Message> getMessageIndex() {
-        return messageIndex;
+    public final synchronized List<MessagingException> getCrawlExceptions() {
+        return crawlExceptions;
     }
 
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
 //**************************************************************************************************
 //  Static Methods
 //**************************************************************************************************
-    public static final StoreIndex getInstance(IMAPStore store, HostDefinition hostDefinition)
-            throws MessagingException {
-        final StoreIndex ret = new StoreIndex(hostDefinition);
+    public static final StoreIndex getInstance(IMAPStore store)
+            throws MessagingException, InterruptedException {
+        MessagingException messagingException = null;
+        final StoreIndex ret = new StoreIndex();
         //Crawl
         synchronized (ret.getFolders()) {
+            final ExecutorService service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
             try {
-                //Test must modify a lot
-                final ExecutorService service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
-                crawlFolders(ret, store.getDefaultFolder(), service);
-                service.shutdown();
-                service.awaitTermination(1, TimeUnit.HOURS);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null, ex);
+                crawlFolders(store, ret, store.getDefaultFolder(), service);
+            } catch (MessagingException ex) {
+                messagingException = ex;
             }
+            service.shutdown();
+            service.awaitTermination(1, TimeUnit.HOURS);
+            if(ret.hasCrawlException()){
+                messagingException = ret.getCrawlExceptions().get(0);
+            }
+            try {
+                crawlDebug(store.getDefaultFolder(), ret);
+            } catch (MessagingException ex) {
+                messagingException = ex;
+            }
+        }
+        if (messagingException != null) {
+            throw messagingException;
         }
         return ret;
     }
 
-    //Hacerlo por mensajes y no por carpetas.
-    private static final class Handler implements Runnable {
-
-        private final StoreIndex storeIndex;
-        private final Folder folder;
-        private final List<Message> messages;
-
-        public Handler(StoreIndex storeIndex, Folder folder, List<Message> messages) {
-            this.storeIndex = storeIndex;
-            this.folder = folder;
-            this.messages = messages;
-        }
-
-        public void run() {
-            try {
-                FetchProfile fetchProfile = new FetchProfile();
-                fetchProfile.add(FetchProfile.Item.ENVELOPE);
-                folder.fetch(messages.toArray(new Message[messages.size()]), fetchProfile);
-                for (Message message : messages) {
-                    storeIndex.getMessageIndex().put(
-                            new MessageId(((IMAPMessage) message).getMessageID(),
-                                    ((IMAPMessage) message).getFrom(),
-                                    ((IMAPMessage) message).getRecipients(Message.RecipientType.TO),
-                                    ((IMAPMessage) message).getSubject()), message);
-                    System.out.println("Reading: " + message.getMessageNumber() + " / "
-                            + ((IMAPMessage) message).getMessageID() + " / " + message.getSubject());
-                }
-            } catch (MessagingException messagingException) {
-                Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null,
-                        messagingException);
-            }
-        }
-
-    }
-
-    private static StoreIndex crawlFolders(StoreIndex storeIndex, Folder folder,
-            /*TEMP*/ ExecutorService service) throws
-            MessagingException {
+    private static StoreIndex crawlFolders(IMAPStore store, StoreIndex storeIndex, Folder folder,
+            ExecutorService service) throws MessagingException {
         if (folder != null) {
             final String folderName = folder.getFullName();
             storeIndex.getFolders().add(folderName);
+            if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
+                folder.open(Folder.READ_ONLY);
+                folder.expunge();
+                final int messageCount = folder.getMessageCount();
+                folder.close(false);
+                //Update total message count
+                storeIndex.setMessageCount(storeIndex.getMessageCount() + messageCount);
+                int pos = 1;
+                while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
+                    service.execute(new FolderCrawler(store, folderName, pos,
+                            pos + MNIMAPSync.BATCH_SIZE, storeIndex));
+                    pos = pos + MNIMAPSync.BATCH_SIZE;
+                }
+                service.execute(new FolderCrawler(store, folderName, pos, messageCount, storeIndex));
+            }
             //Folder recursion. Get all children
             if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
                 for (Folder child : folder.list()) {
-                    crawlFolders(storeIndex, child, service);
+                    crawlFolders(store, storeIndex, child, service);
                 }
-            }
-            if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
-                //Update total message count
-                folder.open(Folder.READ_WRITE);
-                storeIndex.setMessageCount(storeIndex.getMessageCount() + folder.getMessageCount());
-                final Message[] messgeArray = folder.getMessages();
-                final List<Message> messages = Arrays.asList(messgeArray);
-                storeIndex.getFolderMessages().put(folderName, messages);
-                final int batch = 200;
-                int pos = 0;
-                while (pos + batch < messages.size()) {
-                    service.execute(new Handler(storeIndex, folder, messages.subList(pos, pos
-                            + batch)));
-                    pos = pos + batch;
-                }
-                service.execute(new Handler(storeIndex, folder, messages.subList(pos, messages.
-                        size())));
             }
         }
         return storeIndex;
+    }
+
+    private static void crawlDebug(Folder folder, StoreIndex storeIndex) throws
+            MessagingException {
+        if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
+            folder.open(Folder.READ_ONLY);
+            System.out.println(folder.getFullName() + " Messages:" + folder.getMessageCount()
+                    + " Crawled:" + storeIndex.getFolderMessages(folder.getFullName()).size());
+            folder.close(false);
+        }
+        if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
+            for (Folder child : folder.list()) {
+                crawlDebug(child, storeIndex);
+            }
+        }
+
     }
 
 //**************************************************************************************************
