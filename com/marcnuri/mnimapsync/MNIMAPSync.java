@@ -20,6 +20,7 @@ import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,16 +36,18 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS = 5;
+    public static final int THREADS = 8;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
+    private final Date startDate;
 
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
     public MNIMAPSync(SyncOptions syncOptions) {
         this.syncOptions = syncOptions;
+        startDate = new Date();
     }
 
 //**************************************************************************************************
@@ -65,6 +68,15 @@ public class MNIMAPSync {
             sourceStore = openStore(syncOptions.host1);
             final StoreCopier sourceCopier = new StoreCopier(sourceStore, targetStore, targetIndex);
             sourceCopier.copy();
+            System.out.println("===============================================================\n"
+                    + "Process finished.\n"
+                    + "===============================================================\n"
+                    + "Folders copied: " + sourceCopier.getFoldersCopiedCount()+"\n"
+                    + "Folders skipped: " + sourceCopier.getFoldersSkippedCount()+"\n"
+                    + "Messages copied: " + sourceCopier.getMessagesCopiedCount()+"\n"
+                    + "Messages skipped: " + sourceCopier.getMessagesSkippedCount()+"\n"
+                    + "Elapsed time: "
+                    + ((System.currentTimeMillis() - startDate.getTime()) / 1000l) + "s");
         } catch (MessagingException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {

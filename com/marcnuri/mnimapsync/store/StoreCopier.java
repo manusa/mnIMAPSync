@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.FetchProfile;
@@ -44,6 +46,10 @@ public class StoreCopier {
     private final IMAPStore sourceStore;
     private final IMAPStore targetStore;
     private final StoreIndex targetIndex;
+    private final AtomicInteger foldersCopiedCount;
+    private final AtomicInteger foldersSkippedCount;
+    private final AtomicLong messagesCopiedCount;
+    private final AtomicLong messagesSkippedCount;
 
 //**************************************************************************************************
 //  Constructors
@@ -53,6 +59,10 @@ public class StoreCopier {
         this.targetStore = targetStore;
         this.targetIndex = targetIndex;
         service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
+        foldersCopiedCount = new AtomicInteger();
+        foldersSkippedCount = new AtomicInteger();
+        messagesCopiedCount = new AtomicLong();
+        messagesSkippedCount = new AtomicLong();
     }
 
 //**************************************************************************************************
@@ -70,7 +80,6 @@ public class StoreCopier {
             copyFolder(sourceStore.getDefaultFolder());
             //Copy messages
             copyMessages((IMAPFolder) sourceStore.getDefaultFolder());
-
         } catch (MessagingException ex) {
             Logger.getLogger(StoreCopier.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -89,6 +98,9 @@ public class StoreCopier {
         final String folderName = folder.getFullName();
         if (!targetIndex.getFolders().contains(folderName)) {
             targetStore.getFolder(folderName).create(folder.getType());
+            updatedFoldersCopiedCount(1);
+        } else {
+            updatedFoldersSkippedCount(1);
         }
         //Folder recursion. Get all children
         if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
@@ -108,11 +120,12 @@ public class StoreCopier {
                 sourceFolder.close(false);
                 int pos = 1;
                 while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
-                    service.execute(new MessageCopier(sourceStore, targetStore, folderName, pos,
+                    service.execute(new MessageCopier(this, sourceStore, targetStore, folderName,
+                            pos,
                             pos + MNIMAPSync.BATCH_SIZE, targetIndex.getFolderMessages(folderName)));
                     pos = pos + MNIMAPSync.BATCH_SIZE;
                 }
-                service.execute(new MessageCopier(sourceStore, targetStore, folderName, pos,
+                service.execute(new MessageCopier(this, sourceStore, targetStore, folderName, pos,
                         messageCount, targetIndex.getFolderMessages(folderName)));
             }
             //Folder recursion. Get all children
@@ -124,9 +137,41 @@ public class StoreCopier {
         }
     }
 
+    protected final void updatedFoldersCopiedCount(int delta) {
+        foldersCopiedCount.getAndAdd(delta);
+    }
+
+    protected final void updatedFoldersSkippedCount(int delta) {
+        foldersSkippedCount.getAndAdd(delta);
+    }
+
+    protected final void updatedMessagesCopiedCount(long delta) {
+        messagesCopiedCount.getAndAdd(delta);
+    }
+
+    protected final void updateMessagesSkippedCount(long delta) {
+        messagesSkippedCount.getAndAdd(delta);
+    }
+
 //**************************************************************************************************
 //  Getter/Setter Methods
 //**************************************************************************************************
+    public final int getFoldersCopiedCount() {
+        return foldersCopiedCount.get();
+    }
+
+    public final int getFoldersSkippedCount() {
+        return foldersSkippedCount.get();
+    }
+
+    public final long getMessagesCopiedCount() {
+        return messagesCopiedCount.get();
+    }
+
+    public final long getMessagesSkippedCount() {
+        return messagesSkippedCount.get();
+    }
+
 //**************************************************************************************************
 //  Static Methods
 //**************************************************************************************************
@@ -135,6 +180,7 @@ public class StoreCopier {
 //**************************************************************************************************
     private static final class MessageCopier implements Runnable {
 
+        private final StoreCopier storeCopier;
         private final IMAPStore sourceStore;
         private final IMAPStore targetStore;
         private final String folderName;
@@ -142,8 +188,9 @@ public class StoreCopier {
         private final int end;
         private final Set<MessageId> targetFolderMessages;
 
-        public MessageCopier(IMAPStore sourceStore, IMAPStore targetStore, String folderName,
-                int start, int end, Set<MessageId> targetFolderMessages) {
+        public MessageCopier(StoreCopier storeCopier, IMAPStore sourceStore, IMAPStore targetStore,
+                String folderName, int start, int end, Set<MessageId> targetFolderMessages) {
+            this.storeCopier = storeCopier;
             this.sourceStore = sourceStore;
             this.targetStore = targetStore;
             this.folderName = folderName;
@@ -153,6 +200,7 @@ public class StoreCopier {
         }
 
         public void run() {
+            long copied = 0l, skipped = 0l;
             try {
                 final Folder sourceFolder = sourceStore.getFolder(folderName);
                 final Folder targetFolder = targetStore.getFolder(folderName);
@@ -170,12 +218,11 @@ public class StoreCopier {
                             ((IMAPMessage) message).getFrom(),
                             ((IMAPMessage) message).getRecipients(Message.RecipientType.TO),
                             message.getSubject()
-//message.getHeader(MNIMAPSync.HEADER_SUBJECT)
                     );
                     if (!targetFolderMessages.contains(id)) {
                         toCopy.add(message);
                     } else {
-                        System.out.println("Skipped message: " + message.getSubject());
+                        skipped++;
                     }
                 }
                 targetFolder.open(Folder.READ_WRITE);
@@ -187,6 +234,7 @@ public class StoreCopier {
                 sourceFolder.fetch(sourceMessages, fullProfile);
                 for (Message message : toCopy) {
                     targetFolder.appendMessages(new Message[]{message});
+                    copied++;
                     System.out.println("Copied message: " + message.getSubject());
                 }
                 targetFolder.close(false);
@@ -195,7 +243,9 @@ public class StoreCopier {
                 Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null,
                         messagingException);
             }
+            storeCopier.updatedMessagesCopiedCount(copied);
+            storeCopier.updateMessagesSkippedCount(skipped);
         }
-
     }
+
 }

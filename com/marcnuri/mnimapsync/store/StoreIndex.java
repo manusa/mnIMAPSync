@@ -65,7 +65,7 @@ public class StoreIndex {
 //**************************************************************************************************
     public final boolean hasCrawlException() {
         synchronized (crawlExceptions) {
-            return crawlExceptions.isEmpty();
+            return !crawlExceptions.isEmpty();
         }
     }
 
@@ -117,11 +117,6 @@ public class StoreIndex {
             if(ret.hasCrawlException()){
                 messagingException = ret.getCrawlExceptions().get(0);
             }
-            try {
-                crawlDebug(store.getDefaultFolder(), ret);
-            } catch (MessagingException ex) {
-                messagingException = ex;
-            }
         }
         if (messagingException != null) {
             throw messagingException;
@@ -159,21 +154,6 @@ public class StoreIndex {
         return storeIndex;
     }
 
-    private static void crawlDebug(Folder folder, StoreIndex storeIndex) throws
-            MessagingException {
-        if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
-            folder.open(Folder.READ_ONLY);
-            System.out.println(folder.getFullName() + " Messages:" + folder.getMessageCount()
-                    + " Crawled:" + storeIndex.getFolderMessages(folder.getFullName()).size());
-            folder.close(false);
-        }
-        if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
-            for (Folder child : folder.list()) {
-                crawlDebug(child, storeIndex);
-            }
-        }
-
-    }
 
 //**************************************************************************************************
 //  Inner Classes

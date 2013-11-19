@@ -38,7 +38,7 @@ public class MessageId implements Serializable {
 //  Constructors
 //**************************************************************************************************
     public MessageId(String messageId, Address[] from, Address[] to, String subject) {
-        this.messageId = messageId.trim();
+        this.messageId = messageId == null ? null : messageId.trim();
         this.from = from;
         this.to = to;
         this.subject = subject.replaceAll("[^a-zA-Z1-9\\\\.\\\\-]", "");
