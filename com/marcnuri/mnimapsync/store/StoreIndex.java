@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
 
@@ -40,17 +41,19 @@ public class StoreIndex {
 //**************************************************************************************************
     private final List<String> folders;
     private final Map<String, Set<MessageId>> folderMessages;
-    private long messageCount;
-    //If true, the other process shouldn't continue
+    private final AtomicLong indexedMessageCount;
+    private final AtomicLong skippedMessageCount;
+    //If no empty, the other processess shouldn't continue
     private final List<MessagingException> crawlExceptions;
 
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
-    private StoreIndex() {
+    public StoreIndex() {
         this.folders = Collections.synchronizedList(new ArrayList<String>());
         this.folderMessages = Collections.synchronizedMap(new HashMap<String, Set<MessageId>>());
-        this.messageCount = 0;
+        this.indexedMessageCount = new AtomicLong();
+        this.skippedMessageCount = new AtomicLong();
         this.crawlExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
     }
 
@@ -69,19 +72,27 @@ public class StoreIndex {
         }
     }
 
+    protected final void updatedIndexedMessageCount(long delta) {
+        indexedMessageCount.getAndAdd(delta);
+    }
+
+    protected final void updatedSkippedMessageCount(long delta) {
+        skippedMessageCount.getAndAdd(delta);
+    }
 //**************************************************************************************************
 //  Getter/Setter Methods
 //**************************************************************************************************
+
     public final synchronized List<String> getFolders() {
         return folders;
     }
 
-    public final synchronized long getMessageCount() {
-        return messageCount;
+    public final long getIndexedMessageCount() {
+        return indexedMessageCount.longValue();
     }
 
-    public final synchronized void setMessageCount(long messageCount) {
-        this.messageCount = messageCount;
+    public final long getSkippedMessageCount() {
+        return skippedMessageCount.longValue();
     }
 
     public synchronized Set<MessageId> getFolderMessages(String folder) {
@@ -100,28 +111,27 @@ public class StoreIndex {
 //**************************************************************************************************
 //  Static Methods
 //**************************************************************************************************
-    public static final StoreIndex getInstance(IMAPStore store)
+    public static final StoreIndex populateFromStore(final StoreIndex index, IMAPStore store)
             throws MessagingException, InterruptedException {
         MessagingException messagingException = null;
-        final StoreIndex ret = new StoreIndex();
         //Crawl
-        synchronized (ret.getFolders()) {
+        synchronized (index.getFolders()) {
             final ExecutorService service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
             try {
-                crawlFolders(store, ret, store.getDefaultFolder(), service);
+                crawlFolders(store, index, store.getDefaultFolder(), service);
             } catch (MessagingException ex) {
                 messagingException = ex;
             }
             service.shutdown();
             service.awaitTermination(1, TimeUnit.HOURS);
-            if(ret.hasCrawlException()){
-                messagingException = ret.getCrawlExceptions().get(0);
+            if (index.hasCrawlException()) {
+                messagingException = index.getCrawlExceptions().get(0);
             }
         }
         if (messagingException != null) {
             throw messagingException;
         }
-        return ret;
+        return index;
     }
 
     private static StoreIndex crawlFolders(IMAPStore store, StoreIndex storeIndex, Folder folder,
@@ -134,8 +144,6 @@ public class StoreIndex {
                 folder.expunge();
                 final int messageCount = folder.getMessageCount();
                 folder.close(false);
-                //Update total message count
-                storeIndex.setMessageCount(storeIndex.getMessageCount() + messageCount);
                 int pos = 1;
                 while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
                     service.execute(new FolderCrawler(store, folderName, pos,
@@ -153,7 +161,6 @@ public class StoreIndex {
         }
         return storeIndex;
     }
-
 
 //**************************************************************************************************
 //  Inner Classes

@@ -9,7 +9,7 @@ other alternative.
 
 mnIMAPSync can be used to migrate or backup an IMAP account to another either in the same server or
  in different servers. The program can be run standalone (command line interface) or accessed directly 
-from another java program.
+from java.
 
 ##Features
 - SSL Support

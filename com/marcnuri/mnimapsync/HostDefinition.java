@@ -15,6 +15,7 @@
 package com.marcnuri.mnimapsync;
 
 /**
+ * Defines the connection settings for an IMAP server account
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */

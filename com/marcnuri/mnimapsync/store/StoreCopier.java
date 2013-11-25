@@ -85,7 +85,6 @@ public class StoreCopier {
         }
         service.shutdown();
         service.awaitTermination(1, TimeUnit.DAYS);
-
     }
 
     /**
@@ -200,44 +199,65 @@ public class StoreCopier {
         }
 
         public void run() {
+            final int updateCount = 20;
             long copied = 0l, skipped = 0l;
             try {
                 final Folder sourceFolder = sourceStore.getFolder(folderName);
-                final Folder targetFolder = targetStore.getFolder(folderName);
                 //Opens a new connection per Thread
                 sourceFolder.open(Folder.READ_WRITE);
                 final Message[] sourceMessages = sourceFolder.getMessages(start, end);
-                final FetchProfile envelopeProfile = new FetchProfile();
-                envelopeProfile.add(FetchProfile.Item.ENVELOPE);
-                envelopeProfile.add(MNIMAPSync.HEADER_SUBJECT);
-                sourceFolder.fetch(sourceMessages, envelopeProfile);
+                sourceFolder.fetch(sourceMessages, MessageId.addHeaders(new FetchProfile()));
                 final List<Message> toCopy = new ArrayList<Message>();
                 for (Message message : sourceMessages) {
-                    final MessageId id = new MessageId(
-                            ((IMAPMessage) message).getMessageID(),
-                            ((IMAPMessage) message).getFrom(),
-                            ((IMAPMessage) message).getRecipients(Message.RecipientType.TO),
-                            message.getSubject()
-                    );
-                    if (!targetFolderMessages.contains(id)) {
-                        toCopy.add(message);
-                    } else {
+                    try {
+                        final String debugSubject = message.getSubject();
+                        if (debugSubject != null && debugSubject.equals(
+                                "expnº 587958")) {
+                            final MessageId debugId = new MessageId((IMAPMessage) message);
+                            final boolean other = targetFolderMessages.contains(debugId);
+                        }
+                        final MessageId id = new MessageId((IMAPMessage) message);
+                        if (!targetFolderMessages.contains(id)) {
+                            toCopy.add(message);
+                        } else {
+                            skipped++;
+                        }
+                    } catch (MessageId.MessageIdException ex) {
+                        //Usually messages that ran into this exception are spammy, so we skip them.
                         skipped++;
                     }
+                    //Update counter with more frequency
+                    if (skipped % updateCount == 0) {
+                        storeCopier.updateMessagesSkippedCount(skipped);
+                        skipped = 0l;
+                    }
                 }
-                targetFolder.open(Folder.READ_WRITE);
-                final FetchProfile fullProfile = new FetchProfile();
-                fullProfile.add(FetchProfile.Item.ENVELOPE);
-                fullProfile.add(FetchProfile.Item.CONTENT_INFO);
-                fullProfile.add(FetchProfile.Item.FLAGS);
-                fullProfile.add(MNIMAPSync.HEADER_SUBJECT);
-                sourceFolder.fetch(sourceMessages, fullProfile);
-                for (Message message : toCopy) {
-                    targetFolder.appendMessages(new Message[]{message});
-                    copied++;
-                    System.out.println("Copied message: " + message.getSubject());
+                if (!toCopy.isEmpty()) {
+                    final FetchProfile fullProfile = MessageId.addHeaders(new FetchProfile());
+                    fullProfile.add(FetchProfile.Item.CONTENT_INFO);
+                    fullProfile.add(FetchProfile.Item.FLAGS);
+                    fullProfile.add(IMAPFolder.FetchProfileItem.HEADERS);
+                    fullProfile.add(IMAPFolder.FetchProfileItem.SIZE);
+                    sourceFolder.fetch(toCopy.toArray(new Message[toCopy.size()]), fullProfile);
+                    final Folder targetFolder = targetStore.getFolder(folderName);
+                    targetFolder.open(Folder.READ_WRITE);
+                    for (Message message : toCopy) {
+                        targetFolder.appendMessages(new Message[]{message});
+                        try {
+                            targetFolderMessages.add(new MessageId((IMAPMessage) message));
+                            copied++;
+                            if (copied % updateCount == 0) {
+                                storeCopier.updatedMessagesCopiedCount(copied);
+                                copied = 0l;
+                            }
+                        } catch (MessageId.MessageIdException ex) {
+                            //No exception should be thrown because id was generated previously and worked
+                            Logger.getLogger(StoreCopier.class.getName()).
+                                    log(Level.SEVERE, null, ex);
+                        }
+                    }
+                    targetFolder.close(false);
                 }
-                targetFolder.close(false);
                 sourceFolder.close(false);
             } catch (MessagingException messagingException) {
                 Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null,

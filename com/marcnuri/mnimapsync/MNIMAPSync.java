@@ -22,6 +22,8 @@ import com.sun.mail.imap.IMAPStore;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
@@ -36,11 +38,13 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS = 8;
+    public static final int THREADS = 5;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
     private final Date startDate;
+    private final StoreIndex targetIndex;
+    private StoreCopier sourceCopier;
 
 //**************************************************************************************************
 //  Constructors
@@ -48,6 +52,9 @@ public class MNIMAPSync {
     public MNIMAPSync(SyncOptions syncOptions) {
         this.syncOptions = syncOptions;
         startDate = new Date();
+        targetIndex = new StoreIndex();
+        sourceCopier = null;
+
     }
 
 //**************************************************************************************************
@@ -56,6 +63,14 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Overridden Methods
 //**************************************************************************************************
+    public final long getElapsedTime() {
+        return System.currentTimeMillis() - startDate.getTime();
+    }
+
+    public final long getElapsedTimeInSeconds() {
+        return getElapsedTime() / 1000l;
+    }
+
 //**************************************************************************************************
 //  Other Methods
 //**************************************************************************************************
@@ -64,19 +79,20 @@ public class MNIMAPSync {
         IMAPStore sourceStore = null;
         try {
             targetStore = openStore(syncOptions.host2);
-            final StoreIndex targetIndex = StoreIndex.getInstance(targetStore);
+            StoreIndex.populateFromStore(targetIndex, targetStore);
             sourceStore = openStore(syncOptions.host1);
-            final StoreCopier sourceCopier = new StoreCopier(sourceStore, targetStore, targetIndex);
+            sourceCopier = new StoreCopier(sourceStore, targetStore, targetIndex);
             sourceCopier.copy();
             System.out.println("===============================================================\n"
                     + "Process finished.\n"
                     + "===============================================================\n"
-                    + "Folders copied: " + sourceCopier.getFoldersCopiedCount()+"\n"
-                    + "Folders skipped: " + sourceCopier.getFoldersSkippedCount()+"\n"
-                    + "Messages copied: " + sourceCopier.getMessagesCopiedCount()+"\n"
-                    + "Messages skipped: " + sourceCopier.getMessagesSkippedCount()+"\n"
-                    + "Elapsed time: "
-                    + ((System.currentTimeMillis() - startDate.getTime()) / 1000l) + "s");
+                    + "Folders copied: " + sourceCopier.getFoldersCopiedCount() + "\n"
+                    + "Folders skipped: " + sourceCopier.getFoldersSkippedCount() + "\n"
+                    + "Messages copied: " + sourceCopier.getMessagesCopiedCount() + "\n"
+                    + "Messages skipped: " + sourceCopier.getMessagesSkippedCount() + "\n"
+                    + "Elapsed time: " + getElapsedTimeInSeconds() + "s" + "\n"
+                    + "Speed: " + ((sourceCopier.getMessagesCopiedCount() + sourceCopier.
+                    getMessagesSkippedCount()) / ((double) getElapsedTimeInSeconds())) + "messags/s");
         } catch (MessagingException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {
@@ -98,36 +114,6 @@ public class MNIMAPSync {
         }
     }
 
-    /**
-     * Open an {@link IMAPStore} for the provided {@link HostDefinition}
-     *
-     * @param host
-     * @return
-     * @throws MessagingException
-     */
-    private IMAPStore openStore(HostDefinition host) throws MessagingException {
-        final Properties properties = new Properties();
-        properties.put("mail.imap.starttls.enable", true);
-        properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(THREADS));
-        if (host.isSsl()) {
-            properties.put("mail.imap.ssl.enable", host.isSsl());
-            properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(THREADS));
-            properties.put("mail.imaps.socketFactory.port", host.getPort());
-            properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
-                    getName());
-            properties.put("mail.imaps.socketFactory.fallback", false);
-        }
-        final Session session = Session.getInstance(properties, null);
-        final IMAPStore ret;
-        if (host.isSsl()) {
-            ret = (IMAPSSLStore) session.getStore("imaps");
-        } else {
-            ret = (IMAPStore) session.getStore("imap");
-        }
-        ret.connect(host.getHost(), host.getPort(), host.getUser(), host.getPassword());
-        return ret;
-    }
-
 //**************************************************************************************************
 //  Getter/Setter Methods
 //**************************************************************************************************
@@ -138,16 +124,25 @@ public class MNIMAPSync {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
         try {
             final MNIMAPSync sync = new MNIMAPSync(parseArgs(args, new SyncOptions(), 0));
+            final Timer timer = new Timer(true);
+            timer.schedule(new SyncMonitor(sync), 1000l, 1000l);
             sync.sync();
-            System.out.println("Finished");
+            timer.cancel();
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
         }
     }
 
+    /**
+     * Parse command line arguments to build a {@link SyncOptions} object
+     *
+     * @param args
+     * @param options
+     * @param current
+     * @return
+     */
     private static SyncOptions parseArgs(String[] args, SyncOptions options, int current) {
         while (current < args.length) {
             final String arg = args[current++];
@@ -186,9 +181,44 @@ public class MNIMAPSync {
         return options;
     }
 
+    /**
+     * Open an {@link IMAPStore} for the provided {@link HostDefinition}
+     *
+     * @param host
+     * @return
+     * @throws MessagingException
+     */
+    private static IMAPStore openStore(HostDefinition host) throws MessagingException {
+        final Properties properties = new Properties();
+        properties.put("mail.debug", "false");
+        properties.put("mail.imap.starttls.enable", true);
+        properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(THREADS));
+        if (host.isSsl()) {
+            properties.put("mail.imap.ssl.enable", host.isSsl());
+            properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(THREADS));
+            properties.put("mail.imaps.socketFactory.port", host.getPort());
+            properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
+                    getName());
+            properties.put("mail.imaps.socketFactory.fallback", false);
+        }
+        final Session session = Session.getInstance(properties, null);
+        final IMAPStore ret;
+        if (host.isSsl()) {
+            ret = (IMAPSSLStore) session.getStore("imaps");
+        } else {
+            ret = (IMAPStore) session.getStore("imap");
+        }
+        ret.connect(host.getHost(), host.getPort(), host.getUser(), host.getPassword());
+        return ret;
+    }
+
 //**************************************************************************************************
 //  Inner Classes
 //**************************************************************************************************
+    /**
+     * Object that hold information and options for the sync process.
+     *
+     */
     public static final class SyncOptions implements Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -232,6 +262,33 @@ public class MNIMAPSync {
                 return false;
             }
             return true;
+        }
+    }
+
+    private static final class SyncMonitor extends TimerTask {
+
+        private final MNIMAPSync sync;
+
+        public SyncMonitor(MNIMAPSync sync) {
+            this.sync = sync;
+        }
+
+        @Override
+        public void run() {
+            System.out.print(String.format(
+                    "\rIndexed messages (target): %,d/%,d "
+                    + " Copied: %,d Skipped: %,d Speed: %.2f m/s",
+                    (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount() : 0l),
+                    (sync.targetIndex != null
+                    ? sync.targetIndex.getIndexedMessageCount() + sync.targetIndex.
+                    getSkippedMessageCount() : 0l),
+                    (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount() : 0),
+                    (sync.sourceCopier != null ? sync.sourceCopier.getMessagesSkippedCount() : 0),
+                    (sync.sourceCopier != null ? (double) (sync.sourceCopier.
+                    getMessagesCopiedCount()
+                    + sync.sourceCopier.getMessagesSkippedCount()) / (double) sync.
+                    getElapsedTimeInSeconds() : 0)
+            ));
         }
 
     }

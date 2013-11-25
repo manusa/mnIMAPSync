@@ -14,7 +14,6 @@
  */
 package com.marcnuri.mnimapsync.store;
 
-import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import javax.mail.FetchProfile;
@@ -56,42 +55,44 @@ public class FolderCrawler implements Runnable {
 //  Overridden Methods
 //**************************************************************************************************
     public void run() {
+        long indexedMessages = 0l, skippedMessages = 0l;
         try {
             final Folder folder = store.getFolder(folderName);
             folder.open(Folder.READ_ONLY);
             final Message[] messages = folder.getMessages(start, end);
-            final FetchProfile fetchProfile = new FetchProfile();
-            fetchProfile.add(FetchProfile.Item.ENVELOPE);
-            fetchProfile.add(MNIMAPSync.HEADER_SUBJECT);
-            folder.fetch(messages, fetchProfile);
-            System.out.println(folderName + ": " + (end - start + 1) + "/" + messages.length);
+            folder.fetch(messages, MessageId.addHeaders(new FetchProfile()));
             for (Message message : messages) {
                 //Don't bother crawling if index has exceptions. Process won't continue
                 if (storeIndex.hasCrawlException()) {
                     return;
                 }
-                boolean already = storeIndex.getFolderMessages(folderName).add(
-                        new MessageId(
-                                ((IMAPMessage) message).getMessageID(),
-                                ((IMAPMessage) message).getFrom(),
-                                ((IMAPMessage) message).getRecipients(Message.RecipientType.TO),
-                                message.getSubject()
-                        //message.getHeader(MNIMAPSync.HEADER_SUBJECT)
-                        ));
-                if (!already) {
-                    storeIndex.getFolderMessages(folderName).add(new MessageId(
-                            ((IMAPMessage) message).getMessageID(),
-                            ((IMAPMessage) message).getFrom(),
-                            ((IMAPMessage) message).getRecipients(Message.RecipientType.TO),
-                            message.getSubject()
-                    //message.getHeader(MNIMAPSync.HEADER_SUBJECT)
-                    ));
+                try {
+                    final String debugSubject = message.getSubject();
+                    if (debugSubject != null && debugSubject.equals(
+                            "expnº 587958")) {
+                        final MessageId debugId = new MessageId((IMAPMessage) message);
+                        final boolean other = storeIndex.getFolderMessages(folderName).contains(
+                                debugId);
+                    }
+                    final MessageId messageId = new MessageId((IMAPMessage) message);
+                    if (storeIndex.getFolderMessages(folderName).add(messageId)) {
+                        indexedMessages++;
+                    } else {
+                        skippedMessages++;
+                    }
+                } catch (MessageId.MessageIdException ex) {
+                    if (ex.getCause() != null) {
+                        throw new MessagingException();
+                    }
+                    skippedMessages++;
                 }
             }
             folder.close(false);
         } catch (MessagingException messagingException) {
             storeIndex.getCrawlExceptions().add(messagingException);
         }
+        storeIndex.updatedIndexedMessageCount(indexedMessages);
+        storeIndex.updatedSkippedMessageCount(skippedMessages);
     }
 //**************************************************************************************************
 //  Other Methods
