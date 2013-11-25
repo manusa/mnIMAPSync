@@ -210,12 +210,6 @@ public class StoreCopier {
                 final List<Message> toCopy = new ArrayList<Message>();
                 for (Message message : sourceMessages) {
                     try {
-                        final String debugSubject = message.getSubject();
-                        if (debugSubject != null && debugSubject.equals(
-                                "expnº 587958")) {
-                            final MessageId debugId = new MessageId((IMAPMessage) message);
-                            final boolean other = targetFolderMessages.contains(debugId);
-                        }
                         final MessageId id = new MessageId((IMAPMessage) message);
                         if (!targetFolderMessages.contains(id)) {
                             toCopy.add(message);

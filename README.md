@@ -15,6 +15,15 @@ from java.
 - SSL Support
 - Multithread
 
+##Motiviation
+When using [imapsync](http://imapsync.lamiral.info/) to sync different servers I'm getting lots of 
+duplicate messages in successive runs. This is due to the fact that when dealing with unconventional
+e-mails, each server stores certain header information in its own way.
+
+This program is based in the principle of maximizing performance avoiding duplicates. 
+If messages that have already been synced are modified (in the non header part [attachments removed...]) 
+this messages won't be copied again.
+
 ##Tested Servers
 - Dovecot
 - hMailServer

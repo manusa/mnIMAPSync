@@ -38,7 +38,7 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS = 5;
+    public static final int THREADS = 2;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;

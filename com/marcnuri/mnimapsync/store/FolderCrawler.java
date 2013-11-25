@@ -67,13 +67,6 @@ public class FolderCrawler implements Runnable {
                     return;
                 }
                 try {
-                    final String debugSubject = message.getSubject();
-                    if (debugSubject != null && debugSubject.equals(
-                            "expnº 587958")) {
-                        final MessageId debugId = new MessageId((IMAPMessage) message);
-                        final boolean other = storeIndex.getFolderMessages(folderName).contains(
-                                debugId);
-                    }
                     final MessageId messageId = new MessageId((IMAPMessage) message);
                     if (storeIndex.getFolderMessages(folderName).add(messageId)) {
                         indexedMessages++;
