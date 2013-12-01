@@ -43,8 +43,10 @@ public class MNIMAPSync {
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
     private final Date startDate;
-    private final StoreIndex targetIndex;
     private StoreCopier sourceCopier;
+    //Used for deleting tasks unnecessary if not deleting
+    private final StoreIndex sourceIndex;
+    private final StoreIndex targetIndex;
 
 //**************************************************************************************************
 //  Constructors
@@ -52,8 +54,13 @@ public class MNIMAPSync {
     public MNIMAPSync(SyncOptions syncOptions) {
         this.syncOptions = syncOptions;
         startDate = new Date();
-        targetIndex = new StoreIndex();
         sourceCopier = null;
+        if (syncOptions.getDelete()) {
+            sourceIndex = new StoreIndex();
+        } else {
+            sourceIndex = null;
+        }
+        targetIndex = new StoreIndex();
 
     }
 
@@ -81,7 +88,7 @@ public class MNIMAPSync {
             targetStore = openStore(syncOptions.host2);
             StoreIndex.populateFromStore(targetIndex, targetStore);
             sourceStore = openStore(syncOptions.host1);
-            sourceCopier = new StoreCopier(sourceStore, targetStore, targetIndex);
+            sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex);
             sourceCopier.copy();
             System.out.println("===============================================================\n"
                     + "Process finished.\n"
@@ -146,6 +153,7 @@ public class MNIMAPSync {
     private static SyncOptions parseArgs(String[] args, SyncOptions options, int current) {
         while (current < args.length) {
             final String arg = args[current++];
+            //Host 1
             if (arg.equals("--host1")) {
                 options.getHost1().setHost(args[current++]);
             } else if (arg.equals("--port1")) {
@@ -160,7 +168,8 @@ public class MNIMAPSync {
                 options.getHost1().setPassword(args[current++]);
             } else if (arg.equals("--ssl1")) {
                 options.getHost1().setSsl(true);
-            } else if (arg.equals("--host2")) {
+            } //Host 2
+            else if (arg.equals("--host2")) {
                 options.getHost2().setHost(args[current++]);
             } else if (arg.equals("--port2")) {
                 try {
@@ -174,6 +183,9 @@ public class MNIMAPSync {
                 options.getHost2().setPassword(args[current++]);
             } else if (arg.equals("--ssl2")) {
                 options.getHost2().setSsl(true);
+            }//Global options 
+            else if (arg.equals("--delete")) {
+                options.setDelete(true);
             } else {
                 throw new IllegalArgumentException("Unrecognized argument: " + arg);
             }
@@ -224,10 +236,12 @@ public class MNIMAPSync {
         private static final long serialVersionUID = 1L;
         private final HostDefinition host1;
         private final HostDefinition host2;
+        private boolean delete;
 
         public SyncOptions() {
             this.host1 = new HostDefinition();
             this.host2 = new HostDefinition();
+            delete = false;
         }
 
         public HostDefinition getHost1() {
@@ -236,6 +250,14 @@ public class MNIMAPSync {
 
         public HostDefinition getHost2() {
             return host2;
+        }
+
+        public boolean getDelete() {
+            return delete;
+        }
+
+        public void setDelete(boolean delete) {
+            this.delete = delete;
         }
 
         @Override

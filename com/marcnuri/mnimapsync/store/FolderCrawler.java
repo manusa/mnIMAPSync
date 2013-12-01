@@ -25,7 +25,7 @@ import javax.mail.MessagingException;
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */
-public class FolderCrawler implements Runnable {
+public final class FolderCrawler implements Runnable {
 
 //**************************************************************************************************
 //  Fields
