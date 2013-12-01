@@ -14,7 +14,6 @@
  */
 package com.marcnuri.mnimapsync.store;
 
-import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPMessage;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.FetchProfile;
+import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -30,27 +30,27 @@ import javax.mail.MessagingException;
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */
-public final class MessageCopier implements Runnable {
+public final class MessageDeleter implements Runnable {
 
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    private final StoreCopier storeCopier;
+    private final StoreDeleter storeDeleter;
     private final String folderName;
     private final int start;
     private final int end;
-    private final Set<MessageId> targetFolderMessages;
+    private final Set<MessageId> sourceFolderMessages;
 
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
-    public MessageCopier(StoreCopier storeCopier, String folderName, int start, int end,
-            Set<MessageId> targetFolderMessages) {
-        this.storeCopier = storeCopier;
+    public MessageDeleter(StoreDeleter storeDeleter, String folderName, int start, int end,
+            Set<MessageId> sourceFolderMessages) {
+        this.storeDeleter = storeDeleter;
         this.folderName = folderName;
         this.start = start;
         this.end = end;
-        this.targetFolderMessages = targetFolderMessages;
+        this.sourceFolderMessages = sourceFolderMessages;
     }
 
 //**************************************************************************************************
@@ -60,24 +60,20 @@ public final class MessageCopier implements Runnable {
 //  Overridden Methods
 //**************************************************************************************************
     public void run() {
-        final int updateCount = 20;
-        long copied = 0l, skipped = 0l;
+        long deleted = 0l, skipped = 0l;
         try {
-            final Folder sourceFolder = storeCopier.getSourceStore().getFolder(folderName);
+            final Folder targetFolder = storeDeleter.getTargetStore().getFolder(folderName);
             //Opens a new connection per Thread
-            sourceFolder.open(Folder.READ_WRITE);
-            final Message[] sourceMessages = sourceFolder.getMessages(start, end);
-            sourceFolder.fetch(sourceMessages, MessageId.addHeaders(new FetchProfile()));
+            targetFolder.open(Folder.READ_WRITE);
+            final Message[] targetMessages = targetFolder.getMessages(start, end);
+            targetFolder.fetch(targetMessages, MessageId.addHeaders(new FetchProfile()));
             final List<Message> toCopy = new ArrayList<Message>();
-            for (Message message : sourceMessages) {
+            for (Message message : targetMessages) {
                 try {
                     final MessageId id = new MessageId((IMAPMessage) message);
-                    //Index message for deletion (if necessary)
-                    if (storeCopier.getSourceIndex() != null) {
-                        storeCopier.getSourceIndex().getFolderMessages(folderName).add(id);
-                    }
-                    if (!targetFolderMessages.contains(id)) {
-                        toCopy.add(message);
+                    if (!sourceFolderMessages.contains(id)) {
+                        message.setFlag(Flags.Flag.DELETED, true);
+                        deleted++;
                     } else {
                         skipped++;
                     }
@@ -86,43 +82,13 @@ public final class MessageCopier implements Runnable {
                     skipped++;
                 }
             }
-            if (!toCopy.isEmpty()) {
-                final FetchProfile fullProfile = MessageId.addHeaders(new FetchProfile());
-                fullProfile.add(FetchProfile.Item.CONTENT_INFO);
-                fullProfile.add(FetchProfile.Item.FLAGS);
-                fullProfile.add(IMAPFolder.FetchProfileItem.HEADERS);
-                fullProfile.add(IMAPFolder.FetchProfileItem.SIZE);
-                sourceFolder.fetch(toCopy.toArray(new Message[toCopy.size()]), fullProfile);
-                final Folder targetFolder = storeCopier.getTargetStore().getFolder(folderName);
-                targetFolder.open(Folder.READ_WRITE);
-                for (Message message : toCopy) {
-                    targetFolder.appendMessages(new Message[]{message});
-                    try {
-                        targetFolderMessages.add(new MessageId((IMAPMessage) message));
-                        copied++;
-                        if (copied % updateCount == 0) {
-                            storeCopier.updatedMessagesCopiedCount(copied);
-                            copied = 0l;
-                        }
-                    } catch (MessageId.MessageIdException ex) {
-                        //No exception should be thrown because id was generated previously and worked
-                        Logger.getLogger(StoreCopier.class.getName()).
-                                log(Level.SEVERE, null, ex);
-                    }
-                }
-                targetFolder.close(false);
-            }
-            sourceFolder.close(false);
+            //Close folder and expunge flagged messages
+            targetFolder.close(true);
         } catch (MessagingException messagingException) {
-            Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null,
-                    messagingException);
+            Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null, messagingException);
         }
-        storeCopier.updatedMessagesCopiedCount(copied);
-        storeCopier.updateMessagesSkippedCount(skipped);
-        if (storeCopier.getSourceIndex() != null) {
-            //Quick way to update count (not precise)
-            storeCopier.getSourceIndex().updatedIndexedMessageCount(copied + skipped);
-        }
+        storeDeleter.updatedMessagesDeletedCount(deleted);
+        storeDeleter.updateMessagesSkippedCount(skipped);
     }
 //**************************************************************************************************
 //  Other Methods

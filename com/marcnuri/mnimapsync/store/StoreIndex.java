@@ -111,6 +111,15 @@ public class StoreIndex {
 //**************************************************************************************************
 //  Static Methods
 //**************************************************************************************************
+    /**
+     * Static method to populate a {@link StoreIndex} with the messages in an {@link IMAPStore}
+     *
+     * @param index
+     * @param store
+     * @return
+     * @throws MessagingException
+     * @throws InterruptedException
+     */
     public static final StoreIndex populateFromStore(final StoreIndex index, IMAPStore store)
             throws MessagingException, InterruptedException {
         MessagingException messagingException = null;

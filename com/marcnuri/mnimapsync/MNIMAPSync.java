@@ -17,6 +17,7 @@ package com.marcnuri.mnimapsync;
 import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
 import com.marcnuri.mnimapsync.store.StoreCopier;
+import com.marcnuri.mnimapsync.store.StoreDeleter;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import java.io.Serializable;
@@ -38,12 +39,13 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS = 2;
+    public static final int THREADS = 4;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
     private final Date startDate;
     private StoreCopier sourceCopier;
+    private StoreDeleter targetDeleter;
     //Used for deleting tasks unnecessary if not deleting
     private final StoreIndex sourceIndex;
     private final StoreIndex targetIndex;
@@ -90,6 +92,10 @@ public class MNIMAPSync {
             sourceStore = openStore(syncOptions.host1);
             sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex);
             sourceCopier.copy();
+            if(syncOptions.getDelete() && sourceIndex != null){
+                targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore);
+                targetDeleter.delete();
+            }
             System.out.println("===============================================================\n"
                     + "Process finished.\n"
                     + "===============================================================\n"
@@ -298,14 +304,17 @@ public class MNIMAPSync {
         @Override
         public void run() {
             System.out.print(String.format(
-                    "\rIndexed messages (target): %,d/%,d "
-                    + " Copied: %,d Skipped: %,d Speed: %.2f m/s",
+                    "\rIndexed (target): %,d/%,d  Copied: %,d/%,d "
+                            + "Deleted: %,d/%,d Speed: %.2f m/s",
                     (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount() : 0l),
-                    (sync.targetIndex != null
-                    ? sync.targetIndex.getIndexedMessageCount() + sync.targetIndex.
-                    getSkippedMessageCount() : 0l),
+                    (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount()
+                    + sync.targetIndex.getSkippedMessageCount() : 0l),
                     (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount() : 0),
-                    (sync.sourceCopier != null ? sync.sourceCopier.getMessagesSkippedCount() : 0),
+                    (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount()
+                    + sync.sourceCopier.getMessagesSkippedCount() : 0),
+                    (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount(): 0),
+                    (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount()
+                    + sync.targetDeleter.getMessagesSkippedCount() : 0),
                     (sync.sourceCopier != null ? (double) (sync.sourceCopier.
                     getMessagesCopiedCount()
                     + sync.sourceCopier.getMessagesSkippedCount()) / (double) sync.
