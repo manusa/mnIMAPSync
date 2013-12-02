@@ -39,7 +39,7 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS = 4;
+    public static final int THREADS =8;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
@@ -92,7 +92,13 @@ public class MNIMAPSync {
             sourceStore = openStore(syncOptions.host1);
             sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex);
             sourceCopier.copy();
-            if(syncOptions.getDelete() && sourceIndex != null){
+            //Better to disconnect and reconnect. Avoids inactivity disconnections
+            targetStore.close();
+            sourceStore.close();
+            if (syncOptions.getDelete() && sourceIndex != null) {
+                //Reconnect stores (They can timeout for inactivity.
+                sourceStore = openStore(syncOptions.host1);
+                targetStore = openStore(syncOptions.host2);
                 targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore);
                 targetDeleter.delete();
             }
@@ -133,6 +139,9 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Static Methods
 //**************************************************************************************************
+    public static final String translateFolderName(char originalSeparator, char newSeparator, String url){
+        return url.replace(originalSeparator, newSeparator);
+    }
     /**
      * @param args the command line arguments
      */
@@ -305,14 +314,14 @@ public class MNIMAPSync {
         public void run() {
             System.out.print(String.format(
                     "\rIndexed (target): %,d/%,d  Copied: %,d/%,d "
-                            + "Deleted: %,d/%,d Speed: %.2f m/s",
+                    + "Deleted: %,d/%,d Speed: %.2f m/s",
                     (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount() : 0l),
                     (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount()
                     + sync.targetIndex.getSkippedMessageCount() : 0l),
                     (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount() : 0),
                     (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount()
                     + sync.sourceCopier.getMessagesSkippedCount() : 0),
-                    (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount(): 0),
+                    (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount() : 0),
                     (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount()
                     + sync.targetDeleter.getMessagesSkippedCount() : 0),
                     (sync.sourceCopier != null ? (double) (sync.sourceCopier.

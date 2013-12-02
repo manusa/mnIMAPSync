@@ -38,7 +38,9 @@ public class StoreDeleter {
 //**************************************************************************************************
     private final ExecutorService service;
     private final IMAPStore sourceStore;
+    private final char sourceSeparator;
     private final IMAPStore targetStore;
+    private final char targetSeparator;
     private final StoreIndex sourceIndex;
     private final AtomicInteger foldersDeletedCount;
     private final AtomicInteger foldersSkippedCount;
@@ -48,10 +50,13 @@ public class StoreDeleter {
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
-    public StoreDeleter(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore) {
+    public StoreDeleter(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore)
+            throws MessagingException {
         service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
         this.sourceStore = sourceStore;
+        this.sourceSeparator = sourceStore.getDefaultFolder().getSeparator();
         this.targetStore = targetStore;
+        this.targetSeparator = targetStore.getDefaultFolder().getSeparator();
         this.sourceIndex = sourceIndex;
         this.foldersDeletedCount = new AtomicInteger();
         this.foldersSkippedCount = new AtomicInteger();
@@ -83,7 +88,9 @@ public class StoreDeleter {
 
     private void deleteMessages(IMAPFolder targetFolder) throws MessagingException {
         if (targetFolder != null) {
-            final String folderName = targetFolder.getFullName();
+            final String sourceFolderName = targetFolder.getFullName();
+            final String targetFolderName = MNIMAPSync.translateFolderName(sourceSeparator,
+                    targetSeparator, sourceFolderName);
             if ((targetFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 targetFolder.open(Folder.READ_WRITE);
                 targetFolder.expunge();
@@ -91,12 +98,14 @@ public class StoreDeleter {
                 targetFolder.close(false);
                 int pos = 1;
                 while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
-                    service.execute(new MessageDeleter(this, folderName, pos,
-                            pos + MNIMAPSync.BATCH_SIZE, sourceIndex.getFolderMessages(folderName)));
+                    service.execute(
+                            new MessageDeleter(this, sourceFolderName, targetFolderName, pos,
+                                    pos + MNIMAPSync.BATCH_SIZE, false, sourceIndex.
+                                    getFolderMessages(sourceFolderName)));
                     pos = pos + MNIMAPSync.BATCH_SIZE;
                 }
-                service.execute(new MessageDeleter(this, folderName, pos, messageCount,
-                        sourceIndex.getFolderMessages(folderName)));
+                service.execute(new MessageDeleter(this, sourceFolderName, targetFolderName,
+                        pos, messageCount, true, sourceIndex.getFolderMessages(sourceFolderName)));
             }
             //Folder recursion. Get all children
             if ((targetFolder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {

@@ -15,8 +15,6 @@
 package com.marcnuri.mnimapsync.store;
 
 import com.sun.mail.imap.IMAPMessage;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,20 +34,25 @@ public final class MessageDeleter implements Runnable {
 //  Fields
 //**************************************************************************************************
     private final StoreDeleter storeDeleter;
-    private final String folderName;
+    private final String sourceFolderName;
+    private final String targetFolderName;
     private final int start;
     private final int end;
+    private final boolean expunge;
     private final Set<MessageId> sourceFolderMessages;
 
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
-    public MessageDeleter(StoreDeleter storeDeleter, String folderName, int start, int end,
+    public MessageDeleter(StoreDeleter storeDeleter, String sourceFolderName,
+            String targetFolderName, int start, int end, boolean expunge,
             Set<MessageId> sourceFolderMessages) {
         this.storeDeleter = storeDeleter;
-        this.folderName = folderName;
+        this.sourceFolderName = sourceFolderName;
+        this.targetFolderName = targetFolderName;
         this.start = start;
         this.end = end;
+        this.expunge = expunge;
         this.sourceFolderMessages = sourceFolderMessages;
     }
 
@@ -62,12 +65,11 @@ public final class MessageDeleter implements Runnable {
     public void run() {
         long deleted = 0l, skipped = 0l;
         try {
-            final Folder targetFolder = storeDeleter.getTargetStore().getFolder(folderName);
+            final Folder targetFolder = storeDeleter.getTargetStore().getFolder(targetFolderName);
             //Opens a new connection per Thread
             targetFolder.open(Folder.READ_WRITE);
             final Message[] targetMessages = targetFolder.getMessages(start, end);
             targetFolder.fetch(targetMessages, MessageId.addHeaders(new FetchProfile()));
-            final List<Message> toCopy = new ArrayList<Message>();
             for (Message message : targetMessages) {
                 try {
                     final MessageId id = new MessageId((IMAPMessage) message);
@@ -83,7 +85,7 @@ public final class MessageDeleter implements Runnable {
                 }
             }
             //Close folder and expunge flagged messages
-            targetFolder.close(true);
+            targetFolder.close(expunge);
         } catch (MessagingException messagingException) {
             Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null, messagingException);
         }

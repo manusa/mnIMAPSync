@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
+import javax.mail.URLName;
 
 /**
  *
@@ -38,7 +39,9 @@ public final class StoreCopier {
 //**************************************************************************************************
     private final ExecutorService service;
     private final IMAPStore sourceStore;
+    private final char sourceSeparator;
     private final IMAPStore targetStore;
+    private final char targetSeparator;
     private final StoreIndex sourceIndex;
     private final StoreIndex targetIndex;
     private final AtomicInteger foldersCopiedCount;
@@ -50,10 +53,12 @@ public final class StoreCopier {
 //  Constructors
 //**************************************************************************************************
     public StoreCopier(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
-            StoreIndex targetIndex) {
+            StoreIndex targetIndex) throws MessagingException {
         this.sourceStore = sourceStore;
+        this.sourceSeparator = sourceStore.getDefaultFolder().getSeparator();
         this.sourceIndex = sourceIndex;
         this.targetStore = targetStore;
+        this.targetSeparator = targetStore.getDefaultFolder().getSeparator();
         this.targetIndex = targetIndex;
         service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
         foldersCopiedCount = new AtomicInteger();
@@ -94,14 +99,19 @@ public final class StoreCopier {
      * @throws MessagingException
      */
     private void copyFolder(Folder folder) throws MessagingException {
-        final String folderName = folder.getFullName();
+        final String sourceFolderName = folder.getFullName();
+        final String targetFolderName
+                = MNIMAPSync.translateFolderName(sourceSeparator, targetSeparator, sourceFolderName);
         //Index for delete after copy (if necessary)
         if (sourceIndex != null) {
-            sourceIndex.getFolders().add(folderName);
+            sourceIndex.getFolders().add(sourceFolderName);
         }
         //Copy folder
-        if (!targetIndex.getFolders().contains(folderName)) {
-            targetStore.getFolder(folderName).create(folder.getType());
+        if (!targetIndex.getFolders().contains(targetFolderName)) {
+            if (!targetStore.getFolder(targetFolderName).create(folder.getType())) {
+                throw new MessagingException(String.format(
+                        "Couldn't create folder: %s in target server.", sourceFolderName));
+            }
             updatedFoldersCopiedCount(1);
         } else {
             updatedFoldersSkippedCount(1);
@@ -123,7 +133,10 @@ public final class StoreCopier {
      */
     private void copyMessages(IMAPFolder sourceFolder) throws MessagingException {
         if (sourceFolder != null) {
-            final String folderName = sourceFolder.getFullName();
+            final String sourceFolderName = sourceFolder.getFullName();
+            final String targetFolderName
+                    = MNIMAPSync.translateFolderName(sourceSeparator, targetSeparator,
+                            sourceFolderName);
             if ((sourceFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 sourceFolder.open(Folder.READ_WRITE);
                 sourceFolder.expunge();
@@ -131,12 +144,15 @@ public final class StoreCopier {
                 sourceFolder.close(false);
                 int pos = 1;
                 while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
-                    service.execute(new MessageCopier(this, folderName, pos,
-                            pos + MNIMAPSync.BATCH_SIZE, targetIndex.getFolderMessages(folderName)));
+                    //Copy messages
+                    service.execute(new MessageCopier(this, sourceFolderName, targetFolderName, pos,
+                            pos + MNIMAPSync.BATCH_SIZE, targetIndex.getFolderMessages(
+                                    targetFolderName)));
                     pos = pos + MNIMAPSync.BATCH_SIZE;
                 }
-                service.execute(new MessageCopier(this, folderName, pos, messageCount,
-                        targetIndex.getFolderMessages(folderName)));
+                service.execute(new MessageCopier(this, sourceFolderName, targetFolderName, pos,
+                        messageCount,
+                        targetIndex.getFolderMessages(targetFolderName)));
             }
             //Folder recursion. Get all children
             if ((sourceFolder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
