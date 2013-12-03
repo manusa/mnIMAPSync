@@ -76,9 +76,9 @@ public class StoreDeleter {
     public final void delete() throws InterruptedException {
         try {
             //Delete Folder Structure
-            deleteFolder(targetStore.getDefaultFolder());
+            deleteTargetFolder(targetStore.getDefaultFolder());
             //Copy messages
-            deleteMessages((IMAPFolder) targetStore.getDefaultFolder());
+            deleteTargetMessages((IMAPFolder) targetStore.getDefaultFolder());
         } catch (MessagingException ex) {
             Logger.getLogger(StoreDeleter.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -86,11 +86,11 @@ public class StoreDeleter {
         service.awaitTermination(1, TimeUnit.DAYS);
     }
 
-    private void deleteMessages(IMAPFolder targetFolder) throws MessagingException {
+    private void deleteTargetMessages(IMAPFolder targetFolder) throws MessagingException {
         if (targetFolder != null) {
-            final String sourceFolderName = targetFolder.getFullName();
-            final String targetFolderName = MNIMAPSync.translateFolderName(sourceSeparator,
-                    targetSeparator, sourceFolderName);
+            final String targetFolderName = targetFolder.getFullName();
+            final String sourceFolderName = MNIMAPSync.translateFolderName(sourceSeparator,
+                    targetSeparator, targetFolderName);
             if ((targetFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 targetFolder.open(Folder.READ_WRITE);
                 targetFolder.expunge();
@@ -110,24 +110,26 @@ public class StoreDeleter {
             //Folder recursion. Get all children
             if ((targetFolder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
                 for (Folder child : targetFolder.list()) {
-                    deleteMessages((IMAPFolder) child);
+                    deleteTargetMessages((IMAPFolder) child);
                 }
             }
         }
     }
 
-    private void deleteFolder(Folder folder) throws MessagingException {
-        final String folderName = folder.getFullName();
+    private void deleteTargetFolder(Folder folder) throws MessagingException {
+        final String targetFolderName = folder.getFullName();
+        final String sourceFolderName = MNIMAPSync.translateFolderName(targetSeparator, sourceSeparator,
+            targetFolderName);
         //Delete folder
-        if (!sourceIndex.getFolders().contains(folderName)) {
+        if (!sourceIndex.getFolders().contains(sourceFolderName)) {
             //Delete recursively
-            targetStore.getFolder(folderName).delete(true);
+            targetStore.getFolder(targetFolderName).delete(true);
             updatedFoldersDeletedCount(1);
         }
         //Folder recursion. Get all children
         if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
             for (Folder child : folder.list()) {
-                deleteFolder(child);
+                deleteTargetFolder(child);
             }
         }
     }

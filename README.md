@@ -27,3 +27,6 @@ this messages won't be copied again.
 ##Tested Servers
 - Dovecot
 - hMailServer
+- Gmail
+
+##Syncing process

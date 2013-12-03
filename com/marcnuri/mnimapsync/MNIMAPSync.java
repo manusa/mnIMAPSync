@@ -39,7 +39,7 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Fields
 //**************************************************************************************************
-    public static final int THREADS =8;
+    public static final int THREADS = 5;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
@@ -95,15 +95,17 @@ public class MNIMAPSync {
             //Better to disconnect and reconnect. Avoids inactivity disconnections
             targetStore.close();
             sourceStore.close();
-            if (syncOptions.getDelete() && sourceIndex != null) {
+            //Delete only if source store was completely indexed (this happens if no exceptions where raised)
+            if (syncOptions.getDelete() && sourceIndex != null && !sourceCopier.hasCopyException()) {
                 //Reconnect stores (They can timeout for inactivity.
                 sourceStore = openStore(syncOptions.host1);
                 targetStore = openStore(syncOptions.host2);
                 targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore);
                 targetDeleter.delete();
             }
-            System.out.println("===============================================================\n"
-                    + "Process finished.\n"
+            System.out.println(
+                    "===============================================================\n"
+                    + "Sync Process Finished.\n"
                     + "===============================================================\n"
                     + "Folders copied: " + sourceCopier.getFoldersCopiedCount() + "\n"
                     + "Folders skipped: " + sourceCopier.getFoldersSkippedCount() + "\n"
@@ -139,9 +141,11 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Static Methods
 //**************************************************************************************************
-    public static final String translateFolderName(char originalSeparator, char newSeparator, String url){
+    public static final String translateFolderName(char originalSeparator, char newSeparator,
+            String url) {
         return url.replace(originalSeparator, newSeparator);
     }
+
     /**
      * @param args the command line arguments
      */

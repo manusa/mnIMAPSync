@@ -17,6 +17,9 @@ package com.marcnuri.mnimapsync.store;
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
-import javax.mail.URLName;
 
 /**
  *
@@ -48,6 +50,8 @@ public final class StoreCopier {
     private final AtomicInteger foldersSkippedCount;
     private final AtomicLong messagesCopiedCount;
     private final AtomicLong messagesSkippedCount;
+    //If no empty, we shouldn't allow deletion
+    private final List<MessagingException> copyExceptions;
 
 //**************************************************************************************************
 //  Constructors
@@ -65,6 +69,7 @@ public final class StoreCopier {
         foldersSkippedCount = new AtomicInteger();
         messagesCopiedCount = new AtomicLong();
         messagesSkippedCount = new AtomicLong();
+        this.copyExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
     }
 
 //**************************************************************************************************
@@ -79,9 +84,9 @@ public final class StoreCopier {
     public final void copy() throws InterruptedException {
         try {
             //Copy Folder Structure
-            copyFolder(sourceStore.getDefaultFolder());
+            copySourceFolder(sourceStore.getDefaultFolder());
             //Copy messages
-            copyMessages((IMAPFolder) sourceStore.getDefaultFolder());
+            copySourceMessages((IMAPFolder) sourceStore.getDefaultFolder());
         } catch (MessagingException ex) {
             Logger.getLogger(StoreCopier.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -98,7 +103,7 @@ public final class StoreCopier {
      * @param folder
      * @throws MessagingException
      */
-    private void copyFolder(Folder folder) throws MessagingException {
+    private void copySourceFolder(Folder folder) throws MessagingException {
         final String sourceFolderName = folder.getFullName();
         final String targetFolderName
                 = MNIMAPSync.translateFolderName(sourceSeparator, targetSeparator, sourceFolderName);
@@ -119,7 +124,7 @@ public final class StoreCopier {
         //Folder recursion. Get all children
         if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
             for (Folder child : folder.list()) {
-                copyFolder(child);
+                copySourceFolder(child);
             }
         }
     }
@@ -131,7 +136,7 @@ public final class StoreCopier {
      * @param sourceFolder
      * @throws MessagingException
      */
-    private void copyMessages(IMAPFolder sourceFolder) throws MessagingException {
+    private void copySourceMessages(IMAPFolder sourceFolder) throws MessagingException {
         if (sourceFolder != null) {
             final String sourceFolderName = sourceFolder.getFullName();
             final String targetFolderName
@@ -157,12 +162,17 @@ public final class StoreCopier {
             //Folder recursion. Get all children
             if ((sourceFolder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
                 for (Folder child : sourceFolder.list()) {
-                    copyMessages((IMAPFolder) child);
+                    copySourceMessages((IMAPFolder) child);
                 }
             }
         }
     }
-
+    public final boolean hasCopyException() {
+        synchronized (copyExceptions) {
+            return !copyExceptions.isEmpty();
+        }
+    }
+    
     protected final void updatedFoldersCopiedCount(int delta) {
         foldersCopiedCount.getAndAdd(delta);
     }
@@ -208,6 +218,10 @@ public final class StoreCopier {
 
     protected final IMAPStore getTargetStore() {
         return targetStore;
+    }
+    
+    public final synchronized List<MessagingException> getCopyExceptions() {
+        return copyExceptions;
     }
 //**************************************************************************************************
 //  Static Methods

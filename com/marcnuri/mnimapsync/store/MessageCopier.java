@@ -79,6 +79,7 @@ public final class MessageCopier implements Runnable {
                         storeCopier.getSourceIndex().getFolderMessages(sourceFolderName).add(id);
                     }
                     if (!targetFolderMessages.contains(id)) {
+                        ((IMAPMessage)message).setPeek(true);
                         toCopy.add(message);
                     } else {
                         skipped++;
@@ -116,6 +117,7 @@ public final class MessageCopier implements Runnable {
             }
             sourceFolder.close(false);
         } catch (MessagingException messagingException) {
+            storeCopier.getCopyExceptions().add(messagingException);
             Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null,
                     messagingException);
         }
