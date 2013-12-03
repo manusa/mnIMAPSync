@@ -89,8 +89,8 @@ public class StoreDeleter {
     private void deleteTargetMessages(IMAPFolder targetFolder) throws MessagingException {
         if (targetFolder != null) {
             final String targetFolderName = targetFolder.getFullName();
-            final String sourceFolderName = MNIMAPSync.translateFolderName(sourceSeparator,
-                    targetSeparator, targetFolderName);
+            final String sourceFolderName = MNIMAPSync.translateFolderName(targetSeparator,
+                    sourceSeparator, targetFolderName);
             if ((targetFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 targetFolder.open(Folder.READ_WRITE);
                 targetFolder.expunge();
