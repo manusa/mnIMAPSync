@@ -147,9 +147,8 @@ public class MNIMAPSync {
             timer.cancel();
 
             System.out.println(
-                    "===============================================================");
-            System.out.println(
-                    "Sync Process Finished.");
+                    "\n===============================================================");
+            System.out.println("Sync Process Finished.");
             System.out.println(
                     "===============================================================");
             if (sync.sourceCopier != null) {
@@ -178,7 +177,7 @@ public class MNIMAPSync {
                         + sync.targetDeleter.getMessagesSkippedCount()));
             }
             System.out.println(
-                    "Elapsed time: " + sync.getElapsedTimeInSeconds() + "s");
+                    "\nElapsed time: " + sync.getElapsedTimeInSeconds() + "s");
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
         }
