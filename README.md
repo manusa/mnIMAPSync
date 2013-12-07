@@ -25,7 +25,7 @@ Download the latest binary release and execute as follows:
 
 ```Batchfile
 java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.com --password1 password --ssl1
- --host2 other.server.com --port2 142 --user2 user2@other.server.com --password2 password2 --delete
+ --host2 other.server.com --port2 143 --user2 user2@other.server.com --password2 password2 --delete
 ```
 
 ###Command-line arguments
