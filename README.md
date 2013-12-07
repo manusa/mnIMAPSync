@@ -41,8 +41,9 @@ java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.
 |`--user2`*|User name for the account on the target mail server.|
 |`--password2`*|Password for the account on the target mail server.|
 |`--ssl2`|Optional parameter indicating if the program should connect using SSL to the target server.|
-|`--delete`|Optional parameter indicating it the program should delete messages and folders in the target server that don't exist in the source.|
-
+|`--delete`|Optional parameter indicating it the program should delete messages and folders in the 
+target server that don't exist in the source.|
+\*Required arguments
 
 
 
