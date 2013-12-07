@@ -177,7 +177,7 @@ public class MNIMAPSync {
                         + sync.targetDeleter.getMessagesSkippedCount()));
             }
             System.out.println(
-                    "\nElapsed time: " + sync.getElapsedTimeInSeconds() + "s");
+                    "\nElapsed time: " + sync.getElapsedTimeInSeconds() + " s");
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
         }
