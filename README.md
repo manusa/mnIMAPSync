@@ -28,6 +28,24 @@ java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.
  --host2 other.server.com --port2 142 --user2 user2@other.server.com --password2 password2 --delete
 ```
 
+###Command-line arguments
+|Option|Description|
+|------|-----------|
+|`--host1`*|Host of the source mail server.|
+|`--port1`*|IMAP port of the source mail server.|
+|`--user1`*|User name for the account on the source mail server.|
+|`--password1`*|Password for the account on the source mail server.|
+|`--ssl1`|Optional parameter indicating if the program should connect using SSL to the source server.|
+|`--host2`*|Host of the target mail server.|
+|`--port2`*|IMAP port of the target mail server.|
+|`--user2`*|User name for the account on the target mail server.|
+|`--password2`*|Password for the account on the target mail server.|
+|`--ssl2`|Optional parameter indicating if the program should connect using SSL to the target server.|
+|`--delete`|Optional parameter indicating it the program should delete messages and folders in the target server that don't exist in the source.|
+
+
+
+
 ##Motiviation
 When using [imapsync](http://imapsync.lamiral.info/) to sync different servers I'm getting lots of 
 duplicate messages in successive runs. This is due to the fact that when dealing with unconventional
