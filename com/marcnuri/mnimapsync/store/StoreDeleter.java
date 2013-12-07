@@ -50,9 +50,9 @@ public class StoreDeleter {
 //**************************************************************************************************
 //  Constructors
 //**************************************************************************************************
-    public StoreDeleter(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore)
-            throws MessagingException {
-        service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
+    public StoreDeleter(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
+            int threads) throws MessagingException {
+        service = Executors.newFixedThreadPool(threads);
         this.sourceStore = sourceStore;
         this.sourceSeparator = sourceStore.getDefaultFolder().getSeparator();
         this.targetStore = targetStore;
@@ -118,8 +118,9 @@ public class StoreDeleter {
 
     private void deleteTargetFolder(Folder folder) throws MessagingException {
         final String targetFolderName = folder.getFullName();
-        final String sourceFolderName = MNIMAPSync.translateFolderName(targetSeparator, sourceSeparator,
-            targetFolderName);
+        final String sourceFolderName = MNIMAPSync.translateFolderName(targetSeparator,
+                sourceSeparator,
+                targetFolderName);
         //Delete folder
         if (!sourceIndex.getFolders().contains(sourceFolderName)) {
             //Delete recursively

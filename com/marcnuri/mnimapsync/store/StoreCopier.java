@@ -57,14 +57,14 @@ public final class StoreCopier {
 //  Constructors
 //**************************************************************************************************
     public StoreCopier(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
-            StoreIndex targetIndex) throws MessagingException {
+            StoreIndex targetIndex, int threads) throws MessagingException {
         this.sourceStore = sourceStore;
         this.sourceSeparator = sourceStore.getDefaultFolder().getSeparator();
         this.sourceIndex = sourceIndex;
         this.targetStore = targetStore;
         this.targetSeparator = targetStore.getDefaultFolder().getSeparator();
         this.targetIndex = targetIndex;
-        service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
+        service = Executors.newFixedThreadPool(threads);
         foldersCopiedCount = new AtomicInteger();
         foldersSkippedCount = new AtomicInteger();
         messagesCopiedCount = new AtomicLong();

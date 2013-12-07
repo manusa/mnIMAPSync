@@ -19,14 +19,19 @@ from java.
 - Command line execution
 - Deletion of no longer existing messages and folders
 
+  ##Requirements
+- Java 1.5
+
 ##Usage
 The easiest way is to launch the program from the command-line interface.
 Download the latest binary release and execute as follows:
 
 ```Batchfile
-java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.com --password1 password --ssl1
- --host2 other.server.com --port2 143 --user2 user2@other.server.com --password2 password2 --delete
+java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.com --password1 password --ssl1 --host2 other.server.com --port2 143 --user2 user2@other.server.com --password2 password2 --delete
 ```
+
+You can also use any of the convenient shell scripts bundled in the distribution to avoid typing 
+`java -jar mnIMAPSync.jar`.
 
 ###Command-line arguments
 |Option|Description|
@@ -41,6 +46,7 @@ java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.
 |`--user2`*|User name for the account on the target mail server.|
 |`--password2`*|Password for the account on the target mail server.|
 |`--ssl2`|Optional parameter indicating if the program should connect using SSL to the target server.|
+|`--threads`|Number of threads to use. Keep in mind some servers limit the number of concurrent connections|
 |`--delete`|Optional parameter indicating it the program should delete messages and folders in the target server that don't exist in the source.|
 \*Required arguments
 

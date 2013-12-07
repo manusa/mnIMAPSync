@@ -20,7 +20,6 @@ import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
@@ -87,10 +86,11 @@ public class MNIMAPSync {
         IMAPStore targetStore = null;
         IMAPStore sourceStore = null;
         try {
-            targetStore = openStore(syncOptions.host2);
-            StoreIndex.populateFromStore(targetIndex, targetStore);
-            sourceStore = openStore(syncOptions.host1);
-            sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex);
+            targetStore = openStore(syncOptions.getHost2(), syncOptions.getThreads());
+            StoreIndex.populateFromStore(targetIndex, targetStore, syncOptions.getThreads());
+            sourceStore = openStore(syncOptions.getHost1(), syncOptions.getThreads());
+            sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex,
+                    syncOptions.getThreads());
             sourceCopier.copy();
             //Better to disconnect and reconnect. Avoids inactivity disconnections
             targetStore.close();
@@ -98,9 +98,10 @@ public class MNIMAPSync {
             //Delete only if source store was completely indexed (this happens if no exceptions where raised)
             if (syncOptions.getDelete() && sourceIndex != null && !sourceCopier.hasCopyException()) {
                 //Reconnect stores (They can timeout for inactivity.
-                sourceStore = openStore(syncOptions.host1);
-                targetStore = openStore(syncOptions.host2);
-                targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore);
+                sourceStore = openStore(syncOptions.getHost1(), syncOptions.getThreads());
+                targetStore = openStore(syncOptions.getHost2(), syncOptions.getThreads());
+                targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore, syncOptions.
+                        getThreads());
                 targetDeleter.delete();
             }
         } catch (MessagingException ex) {
@@ -227,6 +228,12 @@ public class MNIMAPSync {
             }//Global options 
             else if (arg.equals("--delete")) {
                 options.setDelete(true);
+            } else if (arg.equals("--threads")) {
+                try {
+                    options.setThreads(Integer.parseInt(args[current++]));
+                } catch (NumberFormatException numberFormatException) {
+                    throw new IllegalArgumentException("Threads should be an integer");
+                }
             } else {
                 throw new IllegalArgumentException("Unrecognized argument: " + arg);
             }
@@ -241,14 +248,14 @@ public class MNIMAPSync {
      * @return
      * @throws MessagingException
      */
-    private static IMAPStore openStore(HostDefinition host) throws MessagingException {
+    private static IMAPStore openStore(HostDefinition host, int threads) throws MessagingException {
         final Properties properties = new Properties();
         properties.put("mail.debug", "false");
         properties.put("mail.imap.starttls.enable", true);
-        properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(THREADS));
+        properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(threads));
         if (host.isSsl()) {
             properties.put("mail.imap.ssl.enable", host.isSsl());
-            properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(THREADS));
+            properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(threads));
             properties.put("mail.imaps.socketFactory.port", host.getPort());
             properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
                     getName());
@@ -268,66 +275,6 @@ public class MNIMAPSync {
 //**************************************************************************************************
 //  Inner Classes
 //**************************************************************************************************
-    /**
-     * Object that hold information and options for the sync process.
-     *
-     */
-    public static final class SyncOptions implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-        private final HostDefinition host1;
-        private final HostDefinition host2;
-        private boolean delete;
-
-        public SyncOptions() {
-            this.host1 = new HostDefinition();
-            this.host2 = new HostDefinition();
-            delete = false;
-        }
-
-        public HostDefinition getHost1() {
-            return host1;
-        }
-
-        public HostDefinition getHost2() {
-            return host2;
-        }
-
-        public boolean getDelete() {
-            return delete;
-        }
-
-        public void setDelete(boolean delete) {
-            this.delete = delete;
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 5;
-            hash = 79 * hash + (this.host1 != null ? this.host1.hashCode() : 0);
-            hash = 79 * hash + (this.host2 != null ? this.host2.hashCode() : 0);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final SyncOptions other = (SyncOptions) obj;
-            if (this.host1 != other.host1 && (this.host1 == null || !this.host1.equals(other.host1))) {
-                return false;
-            }
-            if (this.host2 != other.host2 && (this.host2 == null || !this.host2.equals(other.host2))) {
-                return false;
-            }
-            return true;
-        }
-    }
-
     private static final class SyncMonitor extends TimerTask {
 
         private final MNIMAPSync sync;

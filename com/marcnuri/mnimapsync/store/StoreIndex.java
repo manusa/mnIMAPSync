@@ -120,12 +120,12 @@ public class StoreIndex {
      * @throws MessagingException
      * @throws InterruptedException
      */
-    public static final StoreIndex populateFromStore(final StoreIndex index, IMAPStore store)
-            throws MessagingException, InterruptedException {
+    public static final StoreIndex populateFromStore(final StoreIndex index, IMAPStore store,
+            int threads) throws MessagingException, InterruptedException {
         MessagingException messagingException = null;
         //Crawl
         synchronized (index.getFolders()) {
-            final ExecutorService service = Executors.newFixedThreadPool(MNIMAPSync.THREADS);
+            final ExecutorService service = Executors.newFixedThreadPool(threads);
             try {
                 crawlFolders(store, index, store.getDefaultFolder(), service);
             } catch (MessagingException ex) {
