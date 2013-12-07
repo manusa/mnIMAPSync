@@ -19,12 +19,16 @@ from java.
 - Command line execution
 - Deletion of no longer existing messages and folders
 
-  ##Requirements
+##Requirements
 - Java 1.5
+
+##Releases
+- [0.0.1-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
 
 ##Usage
 The easiest way is to launch the program from the command-line interface.
-Download the latest binary release and execute as follows:
+Download the [latest binary release](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
+ and execute as follows:
 
 ```Batchfile
 java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.com --password1 password --ssl1 --host2 other.server.com --port2 143 --user2 user2@other.server.com --password2 password2 --delete

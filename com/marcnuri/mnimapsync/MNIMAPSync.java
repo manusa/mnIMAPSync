@@ -153,7 +153,7 @@ public class MNIMAPSync {
             System.out.println(
                     "===============================================================");
             if (sync.sourceCopier != null) {
-                System.out.printf("\nFolders copied: %s/%s",
+                System.out.printf("Folders copied: %s/%s",
                         sync.sourceCopier.getFoldersCopiedCount(),
                         (sync.sourceCopier.getFoldersCopiedCount()
                         + sync.sourceCopier.getFoldersSkippedCount()));
