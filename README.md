@@ -3,10 +3,11 @@
 ##Description
 Java based IMAP Server syncing tool (work in progress).
 
-This tool is inspired in [imapsync](http://imapsync.lamiral.info/). mnIMAPSync is still not reliable
-you can use it only for testing purposes, if you need a reliable tool it's advised to use imapsync or any
-other alternative. In the last part of this document there is a list of tested IMAP servers, please 
-notify me if you successfully use mnIMAPSync with another server or create an issue for failing servers.
+This tool is inspired in [imapsync](http://imapsync.lamiral.info/). mnIMAPSync is still in
+the early stages although it has been tested in several production systems, it may
+fail in servers where it has not been tested yet. In the last part of this document there is a list of 
+tested IMAP servers, please notify me if you successfully use mnIMAPSync with another server or 
+create an issue for failing servers.
 
 mnIMAPSync can be used to migrate or backup an IMAP account to another either in the same server or
  in different servers. The program can be run standalone (command line interface) or accessed directly 
@@ -36,6 +37,8 @@ java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.
 
 You can also use any of the convenient shell scripts bundled in the distribution to avoid typing 
 `java -jar mnIMAPSync.jar`.
+
+There is an instructable available at [instructables.com](http://www.instructables.com/id/Migrate-mail-from-one-server-to-another-with-mnIMA)
 
 ###Command-line arguments
 |Option|Description|
