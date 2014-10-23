@@ -93,7 +93,9 @@ public class StoreDeleter {
                     sourceSeparator, targetFolderName);
             if ((targetFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 targetFolder.open(Folder.READ_WRITE);
-                targetFolder.expunge();
+                if (targetFolder.getMode() != Folder.READ_ONLY) {
+                    targetFolder.expunge();
+                }
                 final int messageCount = targetFolder.getMessageCount();
                 targetFolder.close(false);
                 int pos = 1;

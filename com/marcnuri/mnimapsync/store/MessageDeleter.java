@@ -14,6 +14,7 @@
  */
 package com.marcnuri.mnimapsync.store;
 
+import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPMessage;
 import java.util.Set;
 import java.util.logging.Level;
@@ -85,7 +86,12 @@ public final class MessageDeleter implements Runnable {
                 }
             }
             //Close folder and expunge flagged messages
-            targetFolder.close(expunge);
+            //Expunge only if folder is read write
+            if (targetFolder.getMode() == Folder.READ_ONLY) {
+                targetFolder.close(false);
+            } else {
+                targetFolder.close(expunge);
+            }
         } catch (MessagingException messagingException) {
             Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null, messagingException);
         }

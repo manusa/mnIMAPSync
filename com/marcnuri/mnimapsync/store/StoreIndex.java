@@ -150,7 +150,9 @@ public class StoreIndex {
             storeIndex.getFolders().add(folderName);
             if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 folder.open(Folder.READ_ONLY);
-                folder.expunge();
+                if (folder.getMode() != Folder.READ_ONLY) {
+                    folder.expunge();
+                }
                 final int messageCount = folder.getMessageCount();
                 folder.close(false);
                 int pos = 1;

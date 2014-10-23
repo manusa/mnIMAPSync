@@ -144,7 +144,9 @@ public final class StoreCopier {
                             sourceFolderName);
             if ((sourceFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 sourceFolder.open(Folder.READ_WRITE);
-                sourceFolder.expunge();
+                if (sourceFolder.getMode() != Folder.READ_ONLY) {
+                    sourceFolder.expunge();
+                }
                 final int messageCount = sourceFolder.getMessageCount();
                 sourceFolder.close(false);
                 int pos = 1;
@@ -167,12 +169,13 @@ public final class StoreCopier {
             }
         }
     }
+
     public final boolean hasCopyException() {
         synchronized (copyExceptions) {
             return !copyExceptions.isEmpty();
         }
     }
-    
+
     protected final void updatedFoldersCopiedCount(int delta) {
         foldersCopiedCount.getAndAdd(delta);
     }
@@ -219,7 +222,7 @@ public final class StoreCopier {
     protected final IMAPStore getTargetStore() {
         return targetStore;
     }
-    
+
     public final synchronized List<MessagingException> getCopyExceptions() {
         return copyExceptions;
     }
