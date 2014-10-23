@@ -25,6 +25,7 @@ import javax.mail.FetchProfile;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.ReadOnlyFolderException;
 
 /**
  *
@@ -67,7 +68,12 @@ public final class MessageCopier implements Runnable {
         try {
             final Folder sourceFolder = storeCopier.getSourceStore().getFolder(sourceFolderName);
             //Opens a new connection per Thread
-            sourceFolder.open(Folder.READ_WRITE);
+            //Manage Servers with public/read only folders.
+            try {
+                sourceFolder.open(Folder.READ_WRITE);
+            } catch (ReadOnlyFolderException ex) {
+                sourceFolder.open(Folder.READ_ONLY);
+            }
             final Message[] sourceMessages = sourceFolder.getMessages(start, end);
             sourceFolder.fetch(sourceMessages, MessageId.addHeaders(new FetchProfile()));
             final List<Message> toCopy = new ArrayList<Message>();
@@ -79,7 +85,7 @@ public final class MessageCopier implements Runnable {
                         storeCopier.getSourceIndex().getFolderMessages(sourceFolderName).add(id);
                     }
                     if (!targetFolderMessages.contains(id)) {
-                        ((IMAPMessage)message).setPeek(true);
+                        ((IMAPMessage) message).setPeek(true);
                         toCopy.add(message);
                     } else {
                         skipped++;

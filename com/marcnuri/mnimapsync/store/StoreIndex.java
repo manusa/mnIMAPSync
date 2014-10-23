@@ -116,6 +116,7 @@ public class StoreIndex {
      *
      * @param index
      * @param store
+     * @param threads
      * @return
      * @throws MessagingException
      * @throws InterruptedException

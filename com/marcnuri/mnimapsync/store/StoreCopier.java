@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
+import javax.mail.ReadOnlyFolderException;
 
 /**
  *
@@ -143,10 +144,16 @@ public final class StoreCopier {
                     = MNIMAPSync.translateFolderName(sourceSeparator, targetSeparator,
                             sourceFolderName);
             if ((sourceFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
-                sourceFolder.open(Folder.READ_WRITE);
+                //Manage Servers with public/read only folders.
+                try {
+                    sourceFolder.open(Folder.READ_WRITE);
+                } catch (ReadOnlyFolderException ex) {
+                    sourceFolder.open(Folder.READ_ONLY);
+                }
                 if (sourceFolder.getMode() != Folder.READ_ONLY) {
                     sourceFolder.expunge();
                 }
+                ///////////////////////
                 final int messageCount = sourceFolder.getMessageCount();
                 sourceFolder.close(false);
                 int pos = 1;
