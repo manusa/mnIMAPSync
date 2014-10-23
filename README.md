@@ -30,7 +30,7 @@ from java.
 
 ##Usage
 The easiest way is to launch the program from the command-line interface.
-Download the [latest binary release](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
+Download the [latest binary release](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.3-alpha.zip)
  and execute as follows:
 
 ```Batchfile
