@@ -88,8 +88,9 @@ If there were errors indexing the target the copying process will abort, not abo
 messages in the target server.
 
 ##Tested Servers
-- Dovecot
-- hMailServer
-- Gmail
+- [Dovecot](http://www.dovecot.org)
+- [hMailServer](http://www.hmailserver.com)
+- [Gmail](http://mail.google.com)
+- [Zimbra Collaboration](http://www.zimbra.com)
 
 Please, share your experience with any other server.
