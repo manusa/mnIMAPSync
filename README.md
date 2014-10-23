@@ -24,8 +24,8 @@ from java.
 - Java 1.5
 
 ##Releases
-- [0.0.1-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
 - [0.0.2-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.2-alpha.zip)
+- [0.0.1-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
 
 ##Usage
 The easiest way is to launch the program from the command-line interface.
