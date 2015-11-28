@@ -40,7 +40,8 @@ java -jar mnIMAPSync.jar --host1 imap.gmail.com --port1 993  --user1 user@gmail.
 You can also use any of the convenient shell scripts bundled in the distribution to avoid typing 
 `java -jar mnIMAPSync.jar`.
 
-There is an instructable available at [instructables.com](http://www.instructables.com/id/Migrate-mail-from-one-server-to-another-with-mnIMA)
+You can find a tutorial on how to use and install mnIMAPSync at 
+There is an instructable available at [blog.marcnuri.com](http://blog.marcnuri.com/incremental-e-mail-backup-and-migration-using-mnimapsync/)
 
 ###Command-line arguments
 |Option|Description|
