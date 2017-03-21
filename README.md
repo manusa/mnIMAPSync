@@ -1,6 +1,6 @@
-#[mnIMAPSync](http://www.marcnuri.com/)
+# [mnIMAPSync](http://www.marcnuri.com/)
 
-##Description
+## Description
 Java based IMAP Server syncing tool (work in progress).
 
 This tool is inspired in [imapsync](http://imapsync.lamiral.info/). mnIMAPSync is still in
@@ -13,22 +13,22 @@ mnIMAPSync can be used to migrate or backup an IMAP account to another either in
  in different servers. The program can be run standalone (command line interface) or accessed directly 
 from java.
 
-##Features
+## Features
 - SSL Support
 - Multithread
 - Api Interface
 - Command line execution
 - Deletion of no longer existing messages and folders
 
-##Requirements
+## Requirements
 - Java 1.5
 
-##Releases
+## Releases
 - [0.0.3-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.3-alpha.zip)
 - [0.0.2-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.2-alpha.zip)
 - [0.0.1-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
 
-##Usage
+## Usage
 The easiest way is to launch the program from the command-line interface.
 Download the [latest binary release](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.3-alpha.zip)
  and execute as follows:
@@ -43,7 +43,7 @@ You can also use any of the convenient shell scripts bundled in the distribution
 You can find a tutorial on how to use and install mnIMAPSync at 
 There is an instructable available at [blog.marcnuri.com](http://blog.marcnuri.com/incremental-e-mail-backup-and-migration-using-mnimapsync/)
 
-###Command-line arguments
+### Command-line arguments
 |Option|Description|
 |------|-----------|
 |`--host1`*|Host of the source mail server.|
@@ -62,7 +62,7 @@ There is an instructable available at [blog.marcnuri.com](http://blog.marcnuri.c
 
 
 
-##Motiviation
+## Motiviation
 When using [imapsync](http://imapsync.lamiral.info/) to sync different servers I'm getting lots of 
 duplicate messages in successive runs. This is due to the fact that when dealing with unconventional
 e-mails, each server stores certain header information in its own way.
@@ -71,9 +71,9 @@ This program is based in the principle of maximizing performance avoiding duplic
 If messages that have already been synced are modified (in the non header part [attachments removed...]) 
 this messages won't be copied again.
 
-##Syncing process
+## Syncing process
 
-###Target Indexing
+### Target Indexing
 
 The process starts indexing mail messages and IMAP folders in the target server. This information
 will be used later to check if the target server already contains messages we are copying from the source 
@@ -82,13 +82,13 @@ server.
 The Index is created in a per folder basis. For each IMAP folder in the target server a separate message index 
 will be created. Every folder in the target server is crawled.
 
-###Copy process
+### Copy process
 
 Once the target index is completed, if and only if this process was successful, the copy process begins.
 If there were errors indexing the target the copying process will abort, not aborting could mean duplicating
 messages in the target server.
 
-##Tested Servers
+## Tested Servers
 - [Dovecot](http://www.dovecot.org)
 - [hMailServer](http://www.hmailserver.com)
 - [Gmail](http://mail.google.com)
