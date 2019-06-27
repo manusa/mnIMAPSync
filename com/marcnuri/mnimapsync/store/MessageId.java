@@ -146,7 +146,7 @@ public class MessageId implements Serializable {
      */
     private static String[] parseAddress(String[] addresses) {
         if (addresses != null) {
-            final List<String> ret = new ArrayList(addresses.length);
+            final List<String> ret = new ArrayList<String>(addresses.length);
             for (String address : addresses) {
                 final Matcher matcher = emailPattern.matcher(address.toUpperCase());
                 while (matcher.find()) {

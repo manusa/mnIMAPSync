@@ -100,7 +100,7 @@ public final class MessageCopier implements Runnable {
                 fullProfile.add(FetchProfile.Item.CONTENT_INFO);
                 fullProfile.add(FetchProfile.Item.FLAGS);
                 fullProfile.add(IMAPFolder.FetchProfileItem.HEADERS);
-                fullProfile.add(IMAPFolder.FetchProfileItem.SIZE);
+                fullProfile.add(FetchProfile.Item.SIZE);
                 sourceFolder.fetch(toCopy.toArray(new Message[toCopy.size()]), fullProfile);
                 final Folder targetFolder = storeCopier.getTargetStore().getFolder(targetFolderName);
                 targetFolder.open(Folder.READ_WRITE);
