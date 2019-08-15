@@ -15,3 +15,10 @@ jobs:
           java-version: '11'
       - name: Gradle Build
         run: ./gradlew build
+      - name: Sonar Analysis
+        run: >
+          ./gradlew sonarqube
+            -Dsonar.projectKey=manusa_mnIMAPSync
+            -Dsonar.organization=manusa-github
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
