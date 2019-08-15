@@ -1,0 +1,36 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile('com.sun.mail:javax.mail:1.6.1')
+}
+
+group = 'com.marcnuri'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+sourceCompatibility = 1.8
+
+mainClassName = "com.marcnuri.mnimapsync.MNIMAPSync"
+
+task fatJar(type: Jar, group: BasePlugin.BUILD_GROUP) {
+    manifest {
+        attributes (
+            'Main-Class': mainClassName ,
+            'Class-Path': configurations.runtime.files.collect { "$it.name" }.join(' ')
+        )
+    }
+    archiveClassifier = 'all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
