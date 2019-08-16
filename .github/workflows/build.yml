@@ -16,6 +16,8 @@ jobs:
       - name: Gradle Build
         run: ./gradlew build
       - name: Sonar Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew sonarqube
           -Dsonar.projectKey=manusa_mnIMAPSync
           -Dsonar.organization=manusa-github
