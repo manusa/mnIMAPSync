@@ -18,6 +18,9 @@ repositories {
 
 dependencies {
     compile('com.sun.mail:javax.mail:1.6.1')
+    testCompile('org.junit.jupiter:junit-jupiter:5.5.1')
+    testCompile('org.mockito:mockito-core:3.0.0')
+    testCompile('org.hamcrest:java-hamcrest:2.0.0.0')
 }
 
 group = 'com.marcnuri'
@@ -26,6 +29,10 @@ sourceCompatibility = 1.8
 sourceCompatibility = 1.8
 
 mainClassName = 'com.marcnuri.mnimapsync.MNIMAPSync'
+
+test {
+    useJUnitPlatform()
+}
 
 task fatJar(type: Jar, group: BasePlugin.BUILD_GROUP) {
     manifest {
