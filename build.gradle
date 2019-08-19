@@ -11,6 +11,7 @@ plugins {
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'jacoco'
 
 repositories {
     mavenCentral()
@@ -32,6 +33,14 @@ mainClassName = 'com.marcnuri.mnimapsync.MNIMAPSync'
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
 }
 
 task fatJar(type: Jar, group: BasePlugin.BUILD_GROUP) {
