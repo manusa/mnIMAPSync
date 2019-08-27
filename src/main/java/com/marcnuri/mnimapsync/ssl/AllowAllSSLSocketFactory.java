@@ -33,14 +33,8 @@ import javax.net.ssl.X509TrustManager;
  */
 public class AllowAllSSLSocketFactory extends SSLSocketFactory {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private final SSLSocketFactory sslSocketFactory;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public AllowAllSSLSocketFactory() {
         try {
             SSLContext sslcontext = SSLContext.getInstance("TLS");
@@ -53,12 +47,6 @@ public class AllowAllSSLSocketFactory extends SSLSocketFactory {
         }
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
     @Override
     public Socket createSocket(Socket socket, String s, int i, boolean flag)
             throws IOException {
@@ -102,23 +90,11 @@ public class AllowAllSSLSocketFactory extends SSLSocketFactory {
         return sslSocketFactory.getSupportedCipherSuites();
     }
 
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
     public static SocketFactory getDefault() {
         return new AllowAllSSLSocketFactory();
     }
 
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
-    private final static class AlwaysTrustManager implements X509TrustManager {
+    private static final class AlwaysTrustManager implements X509TrustManager {
 
         @Override
         public void checkClientTrusted(X509Certificate[] xcs, String string)

@@ -37,9 +37,6 @@ import javax.mail.Session;
  */
 public class MNIMAPSync {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     public static final int THREADS = 5;
     public static final int BATCH_SIZE = 200;
     public static final String HEADER_SUBJECT = "Subject";
@@ -51,9 +48,6 @@ public class MNIMAPSync {
     private final StoreIndex sourceIndex;
     private final StoreIndex targetIndex;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public MNIMAPSync(SyncOptions syncOptions) {
         this.syncOptions = syncOptions;
         startDate = new Date();
@@ -67,12 +61,6 @@ public class MNIMAPSync {
 
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
     public final long getElapsedTime() {
         return System.currentTimeMillis() - startDate.getTime();
     }
@@ -81,9 +69,6 @@ public class MNIMAPSync {
         return getElapsedTime() / 1000l;
     }
 
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
     public final void sync() {
         IMAPStore targetStore = null;
         IMAPStore sourceStore = null;
@@ -127,12 +112,6 @@ public class MNIMAPSync {
         }
     }
 
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
     public static final String translateFolderName(char originalSeparator, char newSeparator,
             String url) {
         return url.replace(originalSeparator, newSeparator);
@@ -274,9 +253,6 @@ public class MNIMAPSync {
         return ret;
     }
 
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
     private static final class SyncMonitor extends TimerTask {
 
         private final MNIMAPSync sync;
