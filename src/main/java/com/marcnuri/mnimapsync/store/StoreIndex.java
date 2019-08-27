@@ -38,9 +38,6 @@ import javax.mail.MessagingException;
  */
 public class StoreIndex {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private final List<String> folders;
     private final Map<String, Set<MessageId>> folderMessages;
     private final AtomicLong indexedMessageCount;
@@ -48,9 +45,6 @@ public class StoreIndex {
     //If no empty, the other processess shouldn't continue
     private final List<MessagingException> crawlExceptions;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public StoreIndex() {
         this.folders = Collections.synchronizedList(new ArrayList<String>());
         this.folderMessages = Collections.synchronizedMap(new HashMap<String, Set<MessageId>>());
@@ -59,15 +53,6 @@ public class StoreIndex {
         this.crawlExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
     public final boolean hasCrawlException() {
         synchronized (crawlExceptions) {
             return !crawlExceptions.isEmpty();
@@ -81,9 +66,6 @@ public class StoreIndex {
     protected final void updatedSkippedMessageCount(long delta) {
         skippedMessageCount.getAndAdd(delta);
     }
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
 
     public final synchronized List<String> getFolders() {
         return folders;
@@ -110,9 +92,6 @@ public class StoreIndex {
         return crawlExceptions;
     }
 
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
     /**
      * Static method to populate a {@link StoreIndex} with the messages in an {@link IMAPStore}
      *
@@ -176,7 +155,4 @@ public class StoreIndex {
         return storeIndex;
     }
 
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
 }

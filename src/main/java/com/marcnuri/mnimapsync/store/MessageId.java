@@ -37,9 +37,6 @@ import javax.mail.MessagingException;
  */
 public class MessageId implements Serializable {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private static final long serialVersionUID = 1L;
     public static final String HEADER_SUBJECT = "Subject";
     public static final String HEADER_MESSAGE_ID = "Message-Id";
@@ -52,9 +49,6 @@ public class MessageId implements Serializable {
     private final String[] to;
     private final String subject;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     //Method using headers Safer but slower
     /**
      * All of this process could be done just by using the ENVELOPE response from the IMAP fetch
@@ -91,12 +85,6 @@ public class MessageId implements Serializable {
         }
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -120,15 +108,6 @@ public class MessageId implements Serializable {
         return result;
     }
 
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
     /**
      * Really important. Different servers return different address values when they are invalid.
      *
@@ -174,9 +153,6 @@ public class MessageId implements Serializable {
         return fetchProfile;
     }
 
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
     public static final class MessageIdException extends Exception {
 
         private static final long serialVersionUID = 1L;

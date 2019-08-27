@@ -25,52 +25,12 @@ import java.util.Objects;
  */
 public class HostDefinition {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
-    private static final long serialVersionUID = 1L;
     private String host;
     private int port;
     private String user;
     private String password;
     private boolean ssl;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        HostDefinition that = (HostDefinition) o;
-        return port == that.port &&
-            ssl == that.ssl &&
-            Objects.equals(host, that.host) &&
-            Objects.equals(user, that.user) &&
-            Objects.equals(password, that.password);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(host, port, user, password, ssl);
-    }
-
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
     public String getHost() {
         return host;
     }
@@ -111,10 +71,25 @@ public class HostDefinition {
         this.ssl = ssl;
     }
 
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        HostDefinition that = (HostDefinition) o;
+        return port == that.port &&
+            ssl == that.ssl &&
+            Objects.equals(host, that.host) &&
+            Objects.equals(user, that.user) &&
+            Objects.equals(password, that.password);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, port, user, password, ssl);
+    }
+
 }

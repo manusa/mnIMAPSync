@@ -35,9 +35,6 @@ import javax.mail.ReadOnlyFolderException;
  */
 public final class MessageCopier implements Runnable {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private final StoreCopier storeCopier;
     private final String sourceFolderName;
     private final String targetFolderName;
@@ -45,9 +42,6 @@ public final class MessageCopier implements Runnable {
     private final int end;
     private final Set<MessageId> targetFolderMessages;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public MessageCopier(StoreCopier storeCopier, String sourceFolderName, String targetFolderName,
             int start, int end, Set<MessageId> targetFolderMessages) {
         this.storeCopier = storeCopier;
@@ -58,12 +52,6 @@ public final class MessageCopier implements Runnable {
         this.targetFolderMessages = targetFolderMessages;
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
     public void run() {
         final int updateCount = 20;
         long copied = 0l, skipped = 0l;
@@ -136,16 +124,4 @@ public final class MessageCopier implements Runnable {
             storeCopier.getSourceIndex().updatedIndexedMessageCount(copied + skipped);
         }
     }
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
 }

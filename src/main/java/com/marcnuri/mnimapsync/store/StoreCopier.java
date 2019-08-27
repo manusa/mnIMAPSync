@@ -39,9 +39,6 @@ import javax.mail.ReadOnlyFolderException;
  */
 public final class StoreCopier {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private final ExecutorService service;
     private final IMAPStore sourceStore;
     private final char sourceSeparator;
@@ -56,9 +53,6 @@ public final class StoreCopier {
     //If no empty, we shouldn't allow deletion
     private final List<MessagingException> copyExceptions;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public StoreCopier(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
             StoreIndex targetIndex, int threads) throws MessagingException {
         this.sourceStore = sourceStore;
@@ -75,15 +69,6 @@ public final class StoreCopier {
         this.copyExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
     public final void copy() throws InterruptedException {
         try {
             //Copy Folder Structure
@@ -201,9 +186,6 @@ public final class StoreCopier {
         messagesSkippedCount.getAndAdd(delta);
     }
 
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
     public final int getFoldersCopiedCount() {
         return foldersCopiedCount.get();
     }
@@ -235,11 +217,5 @@ public final class StoreCopier {
     public final synchronized List<MessagingException> getCopyExceptions() {
         return copyExceptions;
     }
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
 
 }

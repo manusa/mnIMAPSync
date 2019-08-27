@@ -35,9 +35,6 @@ import javax.mail.MessagingException;
  */
 public class StoreDeleter {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private final ExecutorService service;
     private final IMAPStore sourceStore;
     private final char sourceSeparator;
@@ -49,9 +46,6 @@ public class StoreDeleter {
     private final AtomicLong messagesDeletedCount;
     private final AtomicLong messagesSkippedCount;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public StoreDeleter(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
             int threads) throws MessagingException {
         service = Executors.newFixedThreadPool(threads);
@@ -66,15 +60,6 @@ public class StoreDeleter {
         this.messagesSkippedCount = new AtomicLong();
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
     public final void delete() throws InterruptedException {
         try {
             //Delete Folder Structure
@@ -155,9 +140,6 @@ public class StoreDeleter {
         messagesSkippedCount.getAndAdd(delta);
     }
 
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
     public final int getFoldersDeletedCount() {
         return foldersDeletedCount.get();
     }
@@ -185,10 +167,4 @@ public class StoreDeleter {
     protected final IMAPStore getTargetStore() {
         return targetStore;
     }
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
 }

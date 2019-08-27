@@ -32,9 +32,6 @@ import javax.mail.MessagingException;
  */
 public final class MessageDeleter implements Runnable {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
     private final StoreDeleter storeDeleter;
     private final String sourceFolderName;
     private final String targetFolderName;
@@ -43,9 +40,6 @@ public final class MessageDeleter implements Runnable {
     private final boolean expunge;
     private final Set<MessageId> sourceFolderMessages;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public MessageDeleter(StoreDeleter storeDeleter, String sourceFolderName,
             String targetFolderName, int start, int end, boolean expunge,
             Set<MessageId> sourceFolderMessages) {
@@ -58,12 +52,6 @@ public final class MessageDeleter implements Runnable {
         this.sourceFolderMessages = sourceFolderMessages;
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
     public void run() {
         long deleted = 0l, skipped = 0l;
         try {
@@ -99,16 +87,4 @@ public final class MessageDeleter implements Runnable {
         storeDeleter.updatedMessagesDeletedCount(deleted);
         storeDeleter.updateMessagesSkippedCount(skipped);
     }
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
 }

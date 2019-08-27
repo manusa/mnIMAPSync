@@ -25,18 +25,13 @@ import java.util.Objects;
  */
 public class SyncOptions implements Serializable {
 
-//**************************************************************************************************
-//  Fields
-//**************************************************************************************************
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -4119342475628224319L;
+
     private final HostDefinition host1;
     private final HostDefinition host2;
     private boolean delete;
     private int threads;
 
-//**************************************************************************************************
-//  Constructors
-//**************************************************************************************************
     public SyncOptions() {
         this.host1 = new HostDefinition();
         this.host2 = new HostDefinition();
@@ -44,38 +39,6 @@ public class SyncOptions implements Serializable {
         threads = MNIMAPSync.THREADS;
     }
 
-//**************************************************************************************************
-//  Abstract Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Overridden Methods
-//**************************************************************************************************
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SyncOptions that = (SyncOptions) o;
-        return delete == that.delete &&
-            threads == that.threads &&
-            Objects.equals(host1, that.host1) &&
-            Objects.equals(host2, that.host2);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(host1, host2, delete, threads);
-    }
-
-//**************************************************************************************************
-//  Other Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Getter/Setter Methods
-//**************************************************************************************************
     public HostDefinition getHost1() {
         return host1;
     }
@@ -99,11 +62,25 @@ public class SyncOptions implements Serializable {
     public void setThreads(int threads) {
         this.threads = threads;
     }
-//**************************************************************************************************
-//  Static Methods
-//**************************************************************************************************
-//**************************************************************************************************
-//  Inner Classes
-//**************************************************************************************************
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SyncOptions that = (SyncOptions) o;
+        return delete == that.delete &&
+            threads == that.threads &&
+            Objects.equals(host1, that.host1) &&
+            Objects.equals(host2, that.host2);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host1, host2, delete, threads);
+    }
 
 }
