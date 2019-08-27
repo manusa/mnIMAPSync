@@ -17,6 +17,7 @@
 package com.marcnuri.mnimapsync;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  *
@@ -50,37 +51,23 @@ public class SyncOptions implements Serializable {
 //  Overridden Methods
 //**************************************************************************************************
     @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 59 * hash + (this.host1 != null ? this.host1.hashCode() : 0);
-        hash = 59 * hash + (this.host2 != null ? this.host2.hashCode() : 0);
-        hash = 59 * hash + (this.delete ? 1 : 0);
-        hash = 59 * hash + this.threads;
-        return hash;
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SyncOptions that = (SyncOptions) o;
+        return delete == that.delete &&
+            threads == that.threads &&
+            Objects.equals(host1, that.host1) &&
+            Objects.equals(host2, that.host2);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final SyncOptions other = (SyncOptions) obj;
-        if (this.host1 != other.host1 && (this.host1 == null || !this.host1.equals(other.host1))) {
-            return false;
-        }
-        if (this.host2 != other.host2 && (this.host2 == null || !this.host2.equals(other.host2))) {
-            return false;
-        }
-        if (this.delete != other.delete) {
-            return false;
-        }
-        if (this.threads != other.threads) {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        return Objects.hash(host1, host2, delete, threads);
     }
 
 //**************************************************************************************************

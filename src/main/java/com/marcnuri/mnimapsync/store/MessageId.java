@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.mail.FetchProfile;
@@ -97,38 +98,26 @@ public class MessageId implements Serializable {
 //  Overridden Methods
 //**************************************************************************************************
     @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 97 * hash + (this.messageId != null ? this.messageId.hashCode() : 0);
-        hash = 97 * hash + Arrays.deepHashCode(this.from);
-        hash = 97 * hash + Arrays.deepHashCode(this.to);
-        hash = 97 * hash + (this.subject != null ? this.subject.hashCode() : 0);
-        return hash;
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        MessageId messageId1 = (MessageId) o;
+        return Objects.equals(messageId, messageId1.messageId) &&
+            Arrays.equals(from, messageId1.from) &&
+            Arrays.equals(to, messageId1.to) &&
+            Objects.equals(subject, messageId1.subject);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final MessageId other = (MessageId) obj;
-        if ((this.messageId == null) ? (other.messageId != null) : !this.messageId.equals(
-                other.messageId)) {
-            return false;
-        }
-        if (!Arrays.deepEquals(this.from, other.from)) {
-            return false;
-        }
-        if (!Arrays.deepEquals(this.to, other.to)) {
-            return false;
-        }
-        if ((this.subject == null) ? (other.subject != null) : !this.subject.equals(other.subject)) {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        int result = Objects.hash(messageId, subject);
+        result = 31 * result + Arrays.hashCode(from);
+        result = 31 * result + Arrays.hashCode(to);
+        return result;
     }
 
 //**************************************************************************************************

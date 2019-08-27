@@ -16,6 +16,8 @@
  */
 package com.marcnuri.mnimapsync;
 
+import java.util.Objects;
+
 /**
  * Defines the connection settings for an IMAP server account
  *
@@ -43,42 +45,24 @@ public class HostDefinition {
 //  Overridden Methods
 //**************************************************************************************************
     @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 47 * hash + (this.host != null ? this.host.hashCode() : 0);
-        hash = 47 * hash + this.port;
-        hash = 47 * hash + (this.user != null ? this.user.hashCode() : 0);
-        hash = 47 * hash + (this.password != null ? this.password.hashCode() : 0);
-        hash = 47 * hash + (this.ssl ? 1 : 0);
-        return hash;
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        HostDefinition that = (HostDefinition) o;
+        return port == that.port &&
+            ssl == that.ssl &&
+            Objects.equals(host, that.host) &&
+            Objects.equals(user, that.user) &&
+            Objects.equals(password, that.password);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final HostDefinition other = (HostDefinition) obj;
-        if ((this.host == null) ? (other.host != null) : !this.host.equals(other.host)) {
-            return false;
-        }
-        if (this.port != other.port) {
-            return false;
-        }
-        if ((this.user == null) ? (other.user != null) : !this.user.equals(other.user)) {
-            return false;
-        }
-        if ((this.password == null) ? (other.password != null) : !this.password.equals(
-                other.password)) {
-            return false;
-        }
-        if (this.ssl != other.ssl) {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        return Objects.hash(host, port, user, password, ssl);
     }
 
 //**************************************************************************************************
