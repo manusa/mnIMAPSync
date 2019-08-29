@@ -95,6 +95,7 @@ public class MNIMAPSync {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
+            Thread.currentThread().interrupt();
         } finally {
             if (targetStore != null && targetStore.isConnected()) {
                 try {
