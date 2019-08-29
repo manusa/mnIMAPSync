@@ -19,7 +19,6 @@ package com.marcnuri.mnimapsync.ssl;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -41,7 +40,7 @@ public class AllowAllSSLSocketFactory extends SSLSocketFactory {
             sslcontext.init(null,
                     new TrustManager[]{new AlwaysTrustManager()},
                     new java.security.SecureRandom());
-            sslSocketFactory = (SSLSocketFactory) sslcontext.getSocketFactory();
+            sslSocketFactory = sslcontext.getSocketFactory();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -94,16 +93,17 @@ public class AllowAllSSLSocketFactory extends SSLSocketFactory {
         return new AllowAllSSLSocketFactory();
     }
 
+    @SuppressWarnings("squid:S4424")
     private static final class AlwaysTrustManager implements X509TrustManager {
 
         @Override
-        public void checkClientTrusted(X509Certificate[] xcs, String string)
-                throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] xcs, String string) {
+            // All clients trusted, no exceptions thrown
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] xcs, String string)
-                throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] xcs, String string) {
+            // All servers trusted, no exceptions thrown
         }
 
         @Override
