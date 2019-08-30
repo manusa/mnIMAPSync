@@ -45,7 +45,7 @@ public final class FolderCrawler implements Runnable {
     }
 
     public void run() {
-        long indexedMessages = 0l, skippedMessages = 0l;
+        long indexedMessages = 0L, skippedMessages = 0L;
         try {
             final Folder folder = store.getFolder(folderName);
             folder.open(Folder.READ_ONLY);

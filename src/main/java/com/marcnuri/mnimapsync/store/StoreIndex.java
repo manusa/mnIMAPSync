@@ -42,15 +42,15 @@ public class StoreIndex {
     private final Map<String, Set<MessageId>> folderMessages;
     private final AtomicLong indexedMessageCount;
     private final AtomicLong skippedMessageCount;
-    //If no empty, the other processess shouldn't continue
+    //If no empty, the other processes shouldn't continue
     private final List<MessagingException> crawlExceptions;
 
     public StoreIndex() {
-        this.folders = Collections.synchronizedList(new ArrayList<String>());
-        this.folderMessages = Collections.synchronizedMap(new HashMap<String, Set<MessageId>>());
+        this.folders = Collections.synchronizedList(new ArrayList<>());
+        this.folderMessages = Collections.synchronizedMap(new HashMap<>());
         this.indexedMessageCount = new AtomicLong();
         this.skippedMessageCount = new AtomicLong();
-        this.crawlExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
+        this.crawlExceptions = Collections.synchronizedList(new ArrayList<>());
     }
 
     public final boolean hasCrawlException() {
@@ -82,7 +82,7 @@ public class StoreIndex {
     public synchronized Set<MessageId> getFolderMessages(String folder) {
         synchronized (folderMessages) {
             if (!folderMessages.containsKey(folder)) {
-                folderMessages.put(folder, Collections.synchronizedSet(new HashSet<MessageId>()));
+                folderMessages.put(folder, Collections.synchronizedSet(new HashSet<>()));
             }
             return folderMessages.get(folder);
         }
@@ -102,7 +102,7 @@ public class StoreIndex {
      * @throws MessagingException
      * @throws InterruptedException
      */
-    public static final StoreIndex populateFromStore(final StoreIndex index, IMAPStore store,
+    public static StoreIndex populateFromStore(final StoreIndex index, IMAPStore store,
             int threads) throws MessagingException, InterruptedException {
         MessagingException messagingException = null;
         //Crawl
@@ -125,7 +125,7 @@ public class StoreIndex {
         return index;
     }
 
-    private static StoreIndex crawlFolders(IMAPStore store, StoreIndex storeIndex, Folder folder,
+    private static void crawlFolders(IMAPStore store, StoreIndex storeIndex, Folder folder,
             ExecutorService service) throws MessagingException {
         if (folder != null) {
             final String folderName = folder.getFullName();
@@ -152,7 +152,6 @@ public class StoreIndex {
                 }
             }
         }
-        return storeIndex;
     }
 
 }

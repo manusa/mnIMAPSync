@@ -54,7 +54,7 @@ public final class MessageCopier implements Runnable {
 
     public void run() {
         final int updateCount = 20;
-        long copied = 0l, skipped = 0l;
+        long copied = 0L, skipped = 0L;
         try {
             final Folder sourceFolder = storeCopier.getSourceStore().getFolder(sourceFolderName);
             //Opens a new connection per Thread
@@ -66,7 +66,7 @@ public final class MessageCopier implements Runnable {
             }
             final Message[] sourceMessages = sourceFolder.getMessages(start, end);
             sourceFolder.fetch(sourceMessages, MessageId.addHeaders(new FetchProfile()));
-            final List<Message> toCopy = new ArrayList<Message>();
+            final List<Message> toCopy = new ArrayList<>();
             for (Message message : sourceMessages) {
                 try {
                     final MessageId id = new MessageId((IMAPMessage) message);
@@ -101,7 +101,7 @@ public final class MessageCopier implements Runnable {
                         copied++;
                         if (copied % updateCount == 0) {
                             storeCopier.updatedMessagesCopiedCount(copied);
-                            copied = 0l;
+                            copied = 0L;
                         }
                     } catch (MessageId.MessageIdException ex) {
                         //No exception should be thrown because id was generated previously and worked

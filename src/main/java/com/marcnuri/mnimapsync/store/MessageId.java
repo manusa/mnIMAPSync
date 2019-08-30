@@ -37,12 +37,13 @@ import javax.mail.MessagingException;
  */
 public class MessageId implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    public static final String HEADER_SUBJECT = "Subject";
-    public static final String HEADER_MESSAGE_ID = "Message-Id";
-    public static final String HEADER_FROM = "From";
-    public static final String HEADER_TO = "To";
-    public static final Pattern emailPattern = Pattern.compile(
+    private static final long serialVersionUID = 8724942298665055562L;
+
+    private static final String HEADER_SUBJECT = "Subject";
+    private static final String HEADER_MESSAGE_ID = "Message-Id";
+    private static final String HEADER_FROM = "From";
+    private static final String HEADER_TO = "To";
+    private static final Pattern emailPattern = Pattern.compile(
             "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}");
     private final String messageId;
     private final String[] from;
@@ -116,7 +117,7 @@ public class MessageId implements Serializable {
      */
     private static String[] parseAddress(String[] addresses) {
         if (addresses != null) {
-            final List<String> ret = new ArrayList<String>(addresses.length);
+            final List<String> ret = new ArrayList<>(addresses.length);
             for (String address : addresses) {
                 final Matcher matcher = emailPattern.matcher(address.toUpperCase());
                 while (matcher.find()) {
@@ -136,7 +137,7 @@ public class MessageId implements Serializable {
      * @param fetchProfile
      * @return
      */
-    public static final FetchProfile addHeaders(FetchProfile fetchProfile) {
+    static FetchProfile addHeaders(FetchProfile fetchProfile) {
         fetchProfile.add(FetchProfile.Item.ENVELOPE);
         //Some servers respond to get a header request with a partial response of the header
         //when hMailServer is fetched for To or From, it returns only the first entry,
@@ -155,9 +156,7 @@ public class MessageId implements Serializable {
 
     public static final class MessageIdException extends Exception {
 
-        private static final long serialVersionUID = 1L;
-
-        public MessageIdException(String message, MessagingException cause) {
+        MessageIdException(String message, MessagingException cause) {
             super(message, cause);
         }
 
