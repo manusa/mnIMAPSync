@@ -16,6 +16,8 @@
  */
 package com.marcnuri.mnimapsync;
 
+import static com.marcnuri.mnimapsync.cli.ArgumentParser.parseCliArguments;
+
 import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
 import com.marcnuri.mnimapsync.store.StoreCopier;
@@ -122,7 +124,7 @@ public class MNIMAPSync {
      */
     public static void main(String[] args) {
         try {
-            final MNIMAPSync sync = new MNIMAPSync(parseArgs(args, new SyncOptions()));
+            final MNIMAPSync sync = new MNIMAPSync(parseCliArguments(args));
             final Timer timer = new Timer(true);
             timer.schedule(new SyncMonitor(sync), 1000L, 1000L);
             sync.sync();
@@ -163,63 +165,6 @@ public class MNIMAPSync {
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
         }
-    }
-
-    /**
-     * Parse command line arguments to build a {@link SyncOptions} object
-     *
-     * @param args
-     * @param options
-     * @return
-     */
-    private static SyncOptions parseArgs(String[] args, SyncOptions options) {
-        int current = 0;
-        while (current < args.length) {
-            final String arg = args[current++];
-            //Host 1
-            if (arg.equals("--host1")) {
-                options.getSourceHost().setHost(args[current++]);
-            } else if (arg.equals("--port1")) {
-                try {
-                    options.getSourceHost().setPort(Integer.parseInt(args[current++]));
-                } catch (NumberFormatException numberFormatException) {
-                    throw new IllegalArgumentException("Port1 should be an integer");
-                }
-            } else if (arg.equals("--user1")) {
-                options.getSourceHost().setUser(args[current++]);
-            } else if (arg.equals("--password1")) {
-                options.getSourceHost().setPassword(args[current++]);
-            } else if (arg.equals("--ssl1")) {
-                options.getSourceHost().setSsl(true);
-            } //Host 2
-            else if (arg.equals("--host2")) {
-                options.getTargetHost().setHost(args[current++]);
-            } else if (arg.equals("--port2")) {
-                try {
-                    options.getTargetHost().setPort(Integer.parseInt(args[current++]));
-                } catch (NumberFormatException numberFormatException) {
-                    throw new IllegalArgumentException("Port2 should be an integer");
-                }
-            } else if (arg.equals("--user2")) {
-                options.getTargetHost().setUser(args[current++]);
-            } else if (arg.equals("--password2")) {
-                options.getTargetHost().setPassword(args[current++]);
-            } else if (arg.equals("--ssl2")) {
-                options.getTargetHost().setSsl(true);
-            }//Global options
-            else if (arg.equals("--delete")) {
-                options.setDelete(true);
-            } else if (arg.equals("--threads")) {
-                try {
-                    options.setThreads(Integer.parseInt(args[current++]));
-                } catch (NumberFormatException numberFormatException) {
-                    throw new IllegalArgumentException("Threads should be an integer");
-                }
-            } else {
-                throw new IllegalArgumentException("Unrecognized argument: " + arg);
-            }
-        }
-        return options;
     }
 
     /**
