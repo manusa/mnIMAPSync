@@ -37,9 +37,8 @@ import javax.mail.Session;
  */
 public class MNIMAPSync {
 
-    public static final int THREADS = 5;
+    static final int THREADS = 5;
     public static final int BATCH_SIZE = 200;
-    public static final String HEADER_SUBJECT = "Subject";
     private final SyncOptions syncOptions;
     private final Date startDate;
     private StoreCopier sourceCopier;
@@ -61,21 +60,21 @@ public class MNIMAPSync {
 
     }
 
-    public final long getElapsedTime() {
+    private long getElapsedTime() {
         return System.currentTimeMillis() - startDate.getTime();
     }
 
-    public final long getElapsedTimeInSeconds() {
-        return getElapsedTime() / 1000l;
+    private long getElapsedTimeInSeconds() {
+        return getElapsedTime() / 1000L;
     }
 
-    public final void sync() {
+    private void sync() {
         IMAPStore targetStore = null;
         IMAPStore sourceStore = null;
         try {
-            targetStore = openStore(syncOptions.getHost2(), syncOptions.getThreads());
+            targetStore = openStore(syncOptions.getTargetHost(), syncOptions.getThreads());
             StoreIndex.populateFromStore(targetIndex, targetStore, syncOptions.getThreads());
-            sourceStore = openStore(syncOptions.getHost1(), syncOptions.getThreads());
+            sourceStore = openStore(syncOptions.getSourceHost(), syncOptions.getThreads());
             sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex,
                     syncOptions.getThreads());
             sourceCopier.copy();
@@ -85,8 +84,8 @@ public class MNIMAPSync {
             //Delete only if source store was completely indexed (this happens if no exceptions where raised)
             if (syncOptions.getDelete() && sourceIndex != null && !sourceCopier.hasCopyException()) {
                 //Reconnect stores (They can timeout for inactivity.
-                sourceStore = openStore(syncOptions.getHost1(), syncOptions.getThreads());
-                targetStore = openStore(syncOptions.getHost2(), syncOptions.getThreads());
+                sourceStore = openStore(syncOptions.getSourceHost(), syncOptions.getThreads());
+                targetStore = openStore(syncOptions.getTargetHost(), syncOptions.getThreads());
                 targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore, syncOptions.
                         getThreads());
                 targetDeleter.delete();
@@ -113,7 +112,7 @@ public class MNIMAPSync {
         }
     }
 
-    public static final String translateFolderName(char originalSeparator, char newSeparator,
+    public static String translateFolderName(char originalSeparator, char newSeparator,
             String url) {
         return url.replace(originalSeparator, newSeparator);
     }
@@ -123,9 +122,9 @@ public class MNIMAPSync {
      */
     public static void main(String[] args) {
         try {
-            final MNIMAPSync sync = new MNIMAPSync(parseArgs(args, new SyncOptions(), 0));
+            final MNIMAPSync sync = new MNIMAPSync(parseArgs(args, new SyncOptions()));
             final Timer timer = new Timer(true);
-            timer.schedule(new SyncMonitor(sync), 1000l, 1000l);
+            timer.schedule(new SyncMonitor(sync), 1000L, 1000L);
             sync.sync();
             timer.cancel();
 
@@ -171,42 +170,42 @@ public class MNIMAPSync {
      *
      * @param args
      * @param options
-     * @param current
      * @return
      */
-    private static SyncOptions parseArgs(String[] args, SyncOptions options, int current) {
+    private static SyncOptions parseArgs(String[] args, SyncOptions options) {
+        int current = 0;
         while (current < args.length) {
             final String arg = args[current++];
             //Host 1
             if (arg.equals("--host1")) {
-                options.getHost1().setHost(args[current++]);
+                options.getSourceHost().setHost(args[current++]);
             } else if (arg.equals("--port1")) {
                 try {
-                    options.getHost1().setPort(Integer.parseInt(args[current++]));
+                    options.getSourceHost().setPort(Integer.parseInt(args[current++]));
                 } catch (NumberFormatException numberFormatException) {
                     throw new IllegalArgumentException("Port1 should be an integer");
                 }
             } else if (arg.equals("--user1")) {
-                options.getHost1().setUser(args[current++]);
+                options.getSourceHost().setUser(args[current++]);
             } else if (arg.equals("--password1")) {
-                options.getHost1().setPassword(args[current++]);
+                options.getSourceHost().setPassword(args[current++]);
             } else if (arg.equals("--ssl1")) {
-                options.getHost1().setSsl(true);
+                options.getSourceHost().setSsl(true);
             } //Host 2
             else if (arg.equals("--host2")) {
-                options.getHost2().setHost(args[current++]);
+                options.getTargetHost().setHost(args[current++]);
             } else if (arg.equals("--port2")) {
                 try {
-                    options.getHost2().setPort(Integer.parseInt(args[current++]));
+                    options.getTargetHost().setPort(Integer.parseInt(args[current++]));
                 } catch (NumberFormatException numberFormatException) {
                     throw new IllegalArgumentException("Port2 should be an integer");
                 }
             } else if (arg.equals("--user2")) {
-                options.getHost2().setUser(args[current++]);
+                options.getTargetHost().setUser(args[current++]);
             } else if (arg.equals("--password2")) {
-                options.getHost2().setPassword(args[current++]);
+                options.getTargetHost().setPassword(args[current++]);
             } else if (arg.equals("--ssl2")) {
-                options.getHost2().setSsl(true);
+                options.getTargetHost().setSsl(true);
             }//Global options
             else if (arg.equals("--delete")) {
                 options.setDelete(true);
@@ -258,7 +257,7 @@ public class MNIMAPSync {
 
         private final MNIMAPSync sync;
 
-        public SyncMonitor(MNIMAPSync sync) {
+        SyncMonitor(MNIMAPSync sync) {
             this.sync = sync;
         }
 
@@ -267,9 +266,9 @@ public class MNIMAPSync {
             System.out.print(String.format(
                     "\rIndexed (target): %,d/%,d  Copied: %,d/%,d "
                     + "Deleted: %,d/%,d Speed: %.2f m/s",
-                    (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount() : 0l),
-                    (sync.targetIndex != null ? sync.targetIndex.getIndexedMessageCount()
-                    + sync.targetIndex.getSkippedMessageCount() : 0l),
+                sync.targetIndex.getIndexedMessageCount(),
+                sync.targetIndex.getIndexedMessageCount() + sync.targetIndex
+                    .getSkippedMessageCount(),
                     (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount() : 0),
                     (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount()
                     + sync.sourceCopier.getMessagesSkippedCount() : 0),

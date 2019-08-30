@@ -72,7 +72,7 @@ public class MessageDeleterTest {
   void run_emptyFolder_shouldOnlyUpdateIndexes() throws Exception {
     // Given
     final MessageDeleter messageDeleter = new MessageDeleter(
-        storeDeleter, "Source Folder", "Target Folder",
+        storeDeleter, "Target Folder",
         0, 100, true, new HashSet<>());
     doReturn(new Message[0]).when(imapFolder).getMessages(eq(0), eq(100));
     // When
@@ -87,7 +87,7 @@ public class MessageDeleterTest {
     // Given
     final Set<MessageId> sourceFolderMessages = new HashSet<>();
     final MessageDeleter messageDeleter = new MessageDeleter(
-        storeDeleter, "Source Folder", "Target Folder",
+        storeDeleter, "Target Folder",
         0, 100, true, sourceFolderMessages);
     final IMAPMessage message = Mockito.mock(IMAPMessage.class);
     doReturn(new String[]{"1337"}).when(message).getHeader("Message-Id");
@@ -107,7 +107,7 @@ public class MessageDeleterTest {
     // Given
     final Set<MessageId> sourceFolderMessages = new HashSet<>();
     final MessageDeleter messageDeleter = new MessageDeleter(
-        storeDeleter, "Source Folder", "Target Folder",
+        storeDeleter, "Target Folder",
         0, 100, true, sourceFolderMessages);
     final IMAPMessage existingSourceMessage = Mockito.mock(IMAPMessage.class);
     doReturn(new String[]{"1337"}).when(existingSourceMessage).getHeader("Message-Id");

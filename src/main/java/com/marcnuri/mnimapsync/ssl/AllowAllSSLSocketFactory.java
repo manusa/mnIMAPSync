@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.security.cert.X509Certificate;
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -87,10 +86,6 @@ public class AllowAllSSLSocketFactory extends SSLSocketFactory {
     @Override
     public String[] getSupportedCipherSuites() {
         return sslSocketFactory.getSupportedCipherSuites();
-    }
-
-    public static SocketFactory getDefault() {
-        return new AllowAllSSLSocketFactory();
     }
 
     @SuppressWarnings("squid:S4424")

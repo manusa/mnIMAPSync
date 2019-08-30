@@ -66,7 +66,7 @@ public final class StoreCopier {
         foldersSkippedCount = new AtomicInteger();
         messagesCopiedCount = new AtomicLong();
         messagesSkippedCount = new AtomicLong();
-        this.copyExceptions = Collections.synchronizedList(new ArrayList<MessagingException>());
+        this.copyExceptions = Collections.synchronizedList(new ArrayList<>());
     }
 
     public final void copy() throws InterruptedException {
@@ -170,11 +170,11 @@ public final class StoreCopier {
         }
     }
 
-    protected final void updatedFoldersCopiedCount(int delta) {
+    private void updatedFoldersCopiedCount(int delta) {
         foldersCopiedCount.getAndAdd(delta);
     }
 
-    protected final void updatedFoldersSkippedCount(int delta) {
+    private void updatedFoldersSkippedCount(int delta) {
         foldersSkippedCount.getAndAdd(delta);
     }
 
@@ -202,15 +202,15 @@ public final class StoreCopier {
         return messagesSkippedCount.get();
     }
 
-    protected final IMAPStore getSourceStore() {
+    final IMAPStore getSourceStore() {
         return sourceStore;
     }
 
-    protected final StoreIndex getSourceIndex() {
+    final StoreIndex getSourceIndex() {
         return sourceIndex;
     }
 
-    protected final IMAPStore getTargetStore() {
+    final IMAPStore getTargetStore() {
         return targetStore;
     }
 

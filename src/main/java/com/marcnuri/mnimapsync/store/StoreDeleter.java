@@ -88,12 +88,12 @@ public class StoreDeleter {
                 int pos = 1;
                 while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
                     service.execute(
-                            new MessageDeleter(this, sourceFolderName, targetFolderName, pos,
+                            new MessageDeleter(this, targetFolderName, pos,
                                     pos + MNIMAPSync.BATCH_SIZE, false, sourceIndex.
                                     getFolderMessages(sourceFolderName)));
                     pos = pos + MNIMAPSync.BATCH_SIZE;
                 }
-                service.execute(new MessageDeleter(this, sourceFolderName, targetFolderName,
+                service.execute(new MessageDeleter(this, targetFolderName,
                         pos, messageCount, true, sourceIndex.getFolderMessages(sourceFolderName)));
             }
             //Folder recursion. Get all children
@@ -124,12 +124,8 @@ public class StoreDeleter {
         }
     }
 
-    protected final void updatedFoldersDeletedCount(int delta) {
+    private void updatedFoldersDeletedCount(int delta) {
         foldersDeletedCount.getAndAdd(delta);
-    }
-
-    protected final void updatedFoldersSkippedCount(int delta) {
-        foldersSkippedCount.getAndAdd(delta);
     }
 
     protected final void updatedMessagesDeletedCount(long delta) {
@@ -156,15 +152,7 @@ public class StoreDeleter {
         return messagesSkippedCount.get();
     }
 
-    protected final IMAPStore getSourceStore() {
-        return sourceStore;
-    }
-
-    protected final StoreIndex getSourceIndex() {
-        return sourceIndex;
-    }
-
-    protected final IMAPStore getTargetStore() {
+    final IMAPStore getTargetStore() {
         return targetStore;
     }
 }
