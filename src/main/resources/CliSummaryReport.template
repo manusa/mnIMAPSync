@@ -1,0 +1,15 @@
+================================================================================
+Sync Process Finished.
+================================================================================
+
+  Folders copied:   ${foldersCopiedCount}/${foldersToCopyCount}
+  Messages copied:  ${messagesCopiedCount}/${messagesToCopyCount}
+  Speed:            ${messagesPerSecond} messages/second
+  Exceptions:       ${hasCopyException}
+
+  Folders deleted:  ${foldersDeletedCount}/${foldersToDeleteCount}
+  Messages deleted: ${messagesDeletedCount}/${messagesToDeleteCount}
+
+  Elapsed time:     ${elapsedTimeInSeconds} seconds
+
+================================================================================

@@ -17,13 +17,15 @@
 package com.marcnuri.mnimapsync;
 
 import static com.marcnuri.mnimapsync.cli.ArgumentParser.parseCliArguments;
+import static com.marcnuri.mnimapsync.cli.CliSummaryReport.getSummaryReportAsText;
 
-import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
+import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
@@ -66,7 +68,7 @@ public class MNIMAPSync {
         return System.currentTimeMillis() - startDate.getTime();
     }
 
-    private long getElapsedTimeInSeconds() {
+    public long getElapsedTimeInSeconds() {
         return getElapsedTime() / 1000L;
     }
 
@@ -129,41 +131,10 @@ public class MNIMAPSync {
             timer.schedule(new SyncMonitor(sync), 1000L, 1000L);
             sync.sync();
             timer.cancel();
-
-            System.out.println(
-                    "\n===============================================================");
-            System.out.println("Sync Process Finished.");
-            System.out.println(
-                    "===============================================================");
-            if (sync.sourceCopier != null) {
-                System.out.printf("Folders copied: %s/%s",
-                        sync.sourceCopier.getFoldersCopiedCount(),
-                        (sync.sourceCopier.getFoldersCopiedCount()
-                        + sync.sourceCopier.getFoldersSkippedCount()));
-                System.out.printf("\nMessages copied: %s/%s",
-                        sync.sourceCopier.getMessagesCopiedCount(),
-                        (sync.sourceCopier.getMessagesCopiedCount()
-                        + sync.sourceCopier.getMessagesSkippedCount()));
-                System.out.printf("\nSpeed: %.2f m/s",
-                        ((sync.sourceCopier.getMessagesCopiedCount()
-                        + sync.sourceCopier.getMessagesSkippedCount())
-                        / ((double) sync.getElapsedTimeInSeconds())));
-                System.out.printf("\nExceptions: %s", sync.sourceCopier.hasCopyException());
-            }
-            if (sync.targetDeleter != null) {
-                System.out.printf("\nFolders deleted: %s/%s",
-                        sync.targetDeleter.getFoldersDeletedCount(),
-                        (sync.targetDeleter.getFoldersDeletedCount()
-                        + sync.targetDeleter.getFoldersSkippedCount()));
-                System.out.printf("\nMessages deleted: %s/%s",
-                        sync.targetDeleter.getMessagesDeletedCount(),
-                        (sync.targetDeleter.getMessagesDeletedCount()
-                        + sync.targetDeleter.getMessagesSkippedCount()));
-            }
-            System.out.println(
-                    "\nElapsed time: " + sync.getElapsedTimeInSeconds() + " s");
-        } catch (IllegalArgumentException e) {
-            System.err.println(e.getMessage());
+            System.out.println(String.format("\r%s",
+                getSummaryReportAsText(sync, sync.sourceCopier, sync.targetDeleter)));
+        } catch (IllegalArgumentException | IOException ex) {
+            System.err.println(ex.getMessage());
         }
     }
 
