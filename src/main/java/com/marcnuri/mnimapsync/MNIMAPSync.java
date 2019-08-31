@@ -19,6 +19,7 @@ package com.marcnuri.mnimapsync;
 import static com.marcnuri.mnimapsync.cli.ArgumentParser.parseCliArguments;
 import static com.marcnuri.mnimapsync.cli.CliSummaryReport.getSummaryReportAsText;
 
+import com.marcnuri.mnimapsync.cli.SyncMonitor;
 import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
@@ -29,7 +30,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
@@ -128,7 +128,9 @@ public class MNIMAPSync {
         try {
             final MNIMAPSync sync = new MNIMAPSync(parseCliArguments(args));
             final Timer timer = new Timer(true);
-            timer.schedule(new SyncMonitor(sync), 1000L, 1000L);
+            timer.schedule(
+                new SyncMonitor(sync, sync.targetIndex, sync.sourceCopier, sync.targetDeleter),
+                1000L, 1000L);
             sync.sync();
             timer.cancel();
             System.out.println(String.format("\r%s",
@@ -167,37 +169,6 @@ public class MNIMAPSync {
         }
         ret.connect(host.getHost(), host.getPort(), host.getUser(), host.getPassword());
         return ret;
-    }
-
-    private static final class SyncMonitor extends TimerTask {
-
-        private final MNIMAPSync sync;
-
-        SyncMonitor(MNIMAPSync sync) {
-            this.sync = sync;
-        }
-
-        @Override
-        public void run() {
-            System.out.print(String.format(
-                    "\rIndexed (target): %,d/%,d  Copied: %,d/%,d "
-                    + "Deleted: %,d/%,d Speed: %.2f m/s",
-                sync.targetIndex.getIndexedMessageCount(),
-                sync.targetIndex.getIndexedMessageCount() + sync.targetIndex
-                    .getSkippedMessageCount(),
-                    (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount() : 0),
-                    (sync.sourceCopier != null ? sync.sourceCopier.getMessagesCopiedCount()
-                    + sync.sourceCopier.getMessagesSkippedCount() : 0),
-                    (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount() : 0),
-                    (sync.targetDeleter != null ? sync.targetDeleter.getMessagesDeletedCount()
-                    + sync.targetDeleter.getMessagesSkippedCount() : 0),
-                    (sync.sourceCopier != null ? (double) (sync.sourceCopier.
-                    getMessagesCopiedCount()
-                    + sync.sourceCopier.getMessagesSkippedCount()) / (double) sync.
-                    getElapsedTimeInSeconds() : 0)
-            ));
-        }
-
     }
 
 }

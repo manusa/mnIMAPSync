@@ -1,7 +1,7 @@
 /*
- * CliSummaryReport.java
+ * CliMonitorReport.java
  *
- * Created on 2019-08-30, 14:02
+ * Created on 2019-08-30, 17:31
  *
  * Copyright 2019 Marc Nuri San Felix
  *
@@ -23,6 +23,7 @@ package com.marcnuri.mnimapsync.cli;
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
+import com.marcnuri.mnimapsync.store.StoreIndex;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
@@ -31,58 +32,48 @@ import java.util.Map;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-30.
  */
-public class CliSummaryReport extends CliReport {
+public class CliMonitorReport extends CliReport {
 
-  private static final String SUMMARY_REPORT_TEMPLATE = "/CliSummaryReport.template";
+  private static final String MONITOR_REPORT_TEMPLATE = "/CliMonitorReport.template";
 
-  private CliSummaryReport() {
+  private CliMonitorReport() {
   }
 
-  public static String getSummaryReportAsText(MNIMAPSync syncInstance, StoreCopier sourceCopier,
-      StoreDeleter targetDeleter) throws IOException {
+  public static String getMonitorReportAsText(MNIMAPSync syncInstance, StoreIndex targetIndex,
+      StoreCopier sourceCopier, StoreDeleter targetDeleter) throws IOException {
 
     return replaceTemplateVariables(
-        loadTemplate(SUMMARY_REPORT_TEMPLATE),
-        initTemplateVariables(syncInstance, sourceCopier, targetDeleter)
+        loadTemplate(MONITOR_REPORT_TEMPLATE).replaceAll("[\r\n]", ""),
+        initTemplateVariables(syncInstance, targetIndex, sourceCopier, targetDeleter)
     );
   }
 
+
   private static Map<String, String> initTemplateVariables(MNIMAPSync syncInstance,
-      StoreCopier sourceCopier, StoreDeleter targetDeleter) {
+      StoreIndex targetIndex, StoreCopier sourceCopier, StoreDeleter targetDeleter) {
 
     final Map<String, String> variables = new HashMap<>();
-    variables.put("elapsedTimeInSeconds", String.valueOf(syncInstance.getElapsedTimeInSeconds()));
-    variables.put("foldersCopiedCount", "0");
-    variables.put("foldersToCopyCount", "0");
+    final long indexedMessageTotalCount =
+        targetIndex.getIndexedMessageCount() + targetIndex.getSkippedMessageCount();
+    variables.put("indexedMessageCount", String.valueOf(targetIndex.getIndexedMessageCount()));
+    variables.put("indexedMessageTotalCount", String.valueOf(indexedMessageTotalCount));
     variables.put("messagesCopiedCount", "0");
     variables.put("messagesToCopyCount", "0");
     variables.put("messagesPerSecond", "0");
-    variables.put("hasCopyException", "false");
-    variables.put("foldersDeletedCount", "0");
-    variables.put("foldersToDeleteCount", "0");
     variables.put("messagesDeletedCount", "0");
     variables.put("messagesToDeleteCount", "0");
     if (sourceCopier != null) {
-      final int foldersToCopy =
-          sourceCopier.getFoldersCopiedCount() + sourceCopier.getFoldersSkippedCount();
       final long messagesToCopy =
           sourceCopier.getMessagesCopiedCount() + sourceCopier.getMessagesSkippedCount();
       final double messagesPerSecond =
           messagesToCopy / ((double) syncInstance.getElapsedTimeInSeconds());
-      variables.put("foldersCopiedCount", String.valueOf(sourceCopier.getFoldersCopiedCount()));
-      variables.put("foldersToCopyCount", String.valueOf(foldersToCopy));
       variables.put("messagesCopiedCount", String.valueOf(sourceCopier.getMessagesCopiedCount()));
       variables.put("messagesToCopyCount", String.valueOf(messagesToCopy));
       variables.put("messagesPerSecond", String.format(Locale.ENGLISH, "%.2f", messagesPerSecond));
-      variables.put("hasCopyException", String.valueOf(sourceCopier.hasCopyException()));
     }
     if (targetDeleter != null) {
-      final int foldersToDelete =
-          targetDeleter.getFoldersDeletedCount() + targetDeleter.getFoldersSkippedCount();
       final long messagesToDelete =
           targetDeleter.getMessagesDeletedCount() + targetDeleter.getMessagesSkippedCount();
-      variables.put("foldersDeletedCount", String.valueOf(targetDeleter.getFoldersDeletedCount()));
-      variables.put("foldersToDeleteCount", String.valueOf(foldersToDelete));
       variables
           .put("messagesDeletedCount", String.valueOf(targetDeleter.getMessagesDeletedCount()));
       variables.put("messagesToDeleteCount", String.valueOf(messagesToDelete));
