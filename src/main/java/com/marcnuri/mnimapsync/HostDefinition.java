@@ -16,6 +16,7 @@
  */
 package com.marcnuri.mnimapsync;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -23,7 +24,9 @@ import java.util.Objects;
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */
-public class HostDefinition {
+public class HostDefinition implements Serializable {
+
+    private static final long serialVersionUID = -3209503227673718986L;
 
     private String host;
     private int port;

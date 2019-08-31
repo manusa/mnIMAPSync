@@ -1,0 +1,1 @@
+Indexed (target): ${indexedMessageCount}/${indexedMessageTotalCount}  Copied: ${messagesCopiedCount}/${messagesToCopyCount} Deleted: ${messagesDeletedCount}/${messagesToDeleteCount} Speed: ${messagesPerSecond} m/s
