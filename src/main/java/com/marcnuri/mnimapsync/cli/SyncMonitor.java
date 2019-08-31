@@ -23,9 +23,6 @@ package com.marcnuri.mnimapsync.cli;
 import static com.marcnuri.mnimapsync.cli.CliMonitorReport.getMonitorReportAsText;
 
 import com.marcnuri.mnimapsync.MNIMAPSync;
-import com.marcnuri.mnimapsync.store.StoreCopier;
-import com.marcnuri.mnimapsync.store.StoreDeleter;
-import com.marcnuri.mnimapsync.store.StoreIndex;
 import java.io.IOException;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -39,25 +36,16 @@ public class SyncMonitor extends TimerTask {
   private static final Logger logger = Logger.getLogger(SyncMonitor.class.getName());
 
   private final MNIMAPSync syncInstance;
-  private final StoreIndex targetIndex;
-  private final StoreCopier sourceCopier;
-  private final StoreDeleter targetDeleter;
 
-  public SyncMonitor(MNIMAPSync syncInstance, StoreIndex targetIndex,
-      StoreCopier sourceCopier, StoreDeleter targetDeleter) {
+  public SyncMonitor(MNIMAPSync syncInstance) {
     this.syncInstance = syncInstance;
-    this.targetIndex = targetIndex;
-    this.sourceCopier = sourceCopier;
-    this.targetDeleter = targetDeleter;
   }
 
   @Override
   public void run() {
     try {
       //noinspection UseOfSystemOutOrSystemErr
-      System.out.print(String.format("\r%s",
-          getMonitorReportAsText(syncInstance, targetIndex, sourceCopier, targetDeleter)
-      ));
+      System.out.print(String.format("\r%s", getMonitorReportAsText(syncInstance)));
     } catch (IOException ex) {
       logger.log(Level.SEVERE, "", ex);
     }

@@ -40,10 +40,8 @@ class CliSummaryReportTest {
   void getSummaryReportAsText_nullStores_shouldPrintEmptyReport() throws Exception {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
-    final StoreCopier storeCopier = null;
-    final StoreDeleter storeDeleter = null;
     // When
-    final String result = getSummaryReportAsText(syncInstance, storeCopier, storeDeleter);
+    final String result = getSummaryReportAsText(syncInstance);
     // Then
     assertThat(result,
         is("================================================================================\n"
@@ -68,14 +66,14 @@ class CliSummaryReportTest {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
     final StoreCopier storeCopier = mock(StoreCopier.class);
+    doReturn(storeCopier).when(syncInstance).getSourceCopier();
     doReturn(13).when(storeCopier).getFoldersCopiedCount();
     doReturn(24).when(storeCopier).getFoldersSkippedCount();
     doReturn(1L).when(storeCopier).getMessagesCopiedCount();
     doReturn(336L).when(storeCopier).getMessagesSkippedCount();
     doReturn(2520L).when(syncInstance).getElapsedTimeInSeconds();
-    final StoreDeleter storeDeleter = null;
     // When
-    final String result = getSummaryReportAsText(syncInstance, storeCopier, storeDeleter);
+    final String result = getSummaryReportAsText(syncInstance);
     // Then
     assertThat(result,
         is("================================================================================\n"
@@ -100,18 +98,20 @@ class CliSummaryReportTest {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
     final StoreCopier storeCopier = mock(StoreCopier.class);
+    doReturn(storeCopier).when(syncInstance).getSourceCopier();
     doReturn(13).when(storeCopier).getFoldersCopiedCount();
     doReturn(24).when(storeCopier).getFoldersSkippedCount();
     doReturn(1L).when(storeCopier).getMessagesCopiedCount();
     doReturn(336L).when(storeCopier).getMessagesSkippedCount();
     doReturn(2520L).when(syncInstance).getElapsedTimeInSeconds();
     final StoreDeleter storeDeleter = mock(StoreDeleter.class);
+    doReturn(storeDeleter).when(syncInstance).getTargetDeleter();
     doReturn(1).when(storeDeleter).getFoldersDeletedCount();
     doReturn(336).when(storeDeleter).getFoldersSkippedCount();
     doReturn(13L).when(storeDeleter).getMessagesDeletedCount();
     doReturn(24L).when(storeDeleter).getMessagesSkippedCount();
     // When
-    final String result = getSummaryReportAsText(syncInstance, storeCopier, storeDeleter);
+    final String result = getSummaryReportAsText(syncInstance);
     // Then
     assertThat(result,
         is("================================================================================\n"

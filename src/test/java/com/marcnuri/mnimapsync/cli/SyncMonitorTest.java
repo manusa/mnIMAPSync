@@ -22,6 +22,7 @@ package com.marcnuri.mnimapsync.cli;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -49,7 +50,9 @@ class SyncMonitorTest {
   @Test
   void run_validMonitorPrint_shouldPrintToSystemOut() throws Exception {
     // Given
-    final SyncMonitor syncMonitor = new SyncMonitor(mock(MNIMAPSync.class), mock(StoreIndex.class), null, null);
+    final MNIMAPSync mnImapSync = mock(MNIMAPSync.class);
+    doReturn(mock(StoreIndex.class)).when(mnImapSync).getTargetIndex();
+    final SyncMonitor syncMonitor = new SyncMonitor(mnImapSync);
     // When
     syncMonitor.run();
     // Then

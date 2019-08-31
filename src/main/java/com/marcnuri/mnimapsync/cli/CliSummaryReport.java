@@ -38,18 +38,17 @@ public class CliSummaryReport extends CliReport {
   private CliSummaryReport() {
   }
 
-  public static String getSummaryReportAsText(MNIMAPSync syncInstance, StoreCopier sourceCopier,
-      StoreDeleter targetDeleter) throws IOException {
+  public static String getSummaryReportAsText(MNIMAPSync syncInstance) throws IOException {
 
     return replaceTemplateVariables(
         loadTemplate(SUMMARY_REPORT_TEMPLATE),
-        initTemplateVariables(syncInstance, sourceCopier, targetDeleter)
+        initTemplateVariables(syncInstance)
     );
   }
 
-  private static Map<String, String> initTemplateVariables(MNIMAPSync syncInstance,
-      StoreCopier sourceCopier, StoreDeleter targetDeleter) {
-
+  private static Map<String, String> initTemplateVariables(MNIMAPSync syncInstance) {
+    final StoreCopier sourceCopier = syncInstance.getSourceCopier();
+    final StoreDeleter targetDeleter = syncInstance.getTargetDeleter();
     final Map<String, String> variables = new HashMap<>();
     variables.put("elapsedTimeInSeconds", String.valueOf(syncInstance.getElapsedTimeInSeconds()));
     variables.put("foldersCopiedCount", "0");

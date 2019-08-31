@@ -1,0 +1,71 @@
+/*
+ * IMAPUtils.java
+ *
+ * Created on 2019-08-31, 9:33
+ *
+ * Copyright 2019 Marc Nuri San Felix
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package com.marcnuri.mnimapsync.imap;
+
+import com.marcnuri.mnimapsync.HostDefinition;
+import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
+import com.sun.mail.imap.IMAPSSLStore;
+import com.sun.mail.imap.IMAPStore;
+import java.util.Properties;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+
+/**
+ * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
+ */
+public class IMAPUtils {
+
+  private IMAPUtils() {
+  }
+
+  /**
+   * Open an {@link IMAPStore} for the provided {@link HostDefinition}
+   *
+   * @param hostDefinition for the IMAPStore connection
+   * @param threads that will be consuming the IMAPStore connection
+   * @return the open IMAPStore
+   */
+  public static IMAPStore openStore(HostDefinition hostDefinition, int threads)
+      throws MessagingException {
+    final Properties properties = new Properties();
+    properties.put("mail.debug", "false");
+    properties.put("mail.imap.starttls.enable", true);
+    properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(threads));
+    if (hostDefinition.isSsl()) {
+      properties.put("mail.imap.ssl.enable", hostDefinition.isSsl());
+      properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(threads));
+      properties.put("mail.imaps.socketFactory.port", hostDefinition.getPort());
+      properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
+          getName());
+      properties.put("mail.imaps.socketFactory.fallback", false);
+    }
+    final Session session = Session.getInstance(properties, null);
+    final IMAPStore ret;
+    if (hostDefinition.isSsl()) {
+      ret = (IMAPSSLStore) session.getStore("imaps");
+    } else {
+      ret = (IMAPStore) session.getStore("imap");
+    }
+    ret.connect(hostDefinition.getHost(), hostDefinition.getPort(), hostDefinition.getUser(),
+        hostDefinition.getPassword());
+    return ret;
+  }
+}

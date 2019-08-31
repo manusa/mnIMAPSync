@@ -18,22 +18,19 @@ package com.marcnuri.mnimapsync;
 
 import static com.marcnuri.mnimapsync.cli.ArgumentParser.parseCliArguments;
 import static com.marcnuri.mnimapsync.cli.CliSummaryReport.getSummaryReportAsText;
+import static com.marcnuri.mnimapsync.imap.IMAPUtils.openStore;
 
 import com.marcnuri.mnimapsync.cli.SyncMonitor;
-import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
 import com.marcnuri.mnimapsync.store.StoreIndex;
-import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import java.io.IOException;
 import java.util.Date;
-import java.util.Properties;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
-import javax.mail.Session;
 
 /**
  *
@@ -66,6 +63,18 @@ public class MNIMAPSync {
 
     private long getElapsedTime() {
         return System.currentTimeMillis() - startDate.getTime();
+    }
+
+    public StoreCopier getSourceCopier() {
+        return sourceCopier;
+    }
+
+    public StoreDeleter getTargetDeleter() {
+        return targetDeleter;
+    }
+
+    public StoreIndex getTargetIndex() {
+        return targetIndex;
     }
 
     public long getElapsedTimeInSeconds() {
@@ -129,46 +138,15 @@ public class MNIMAPSync {
             final MNIMAPSync sync = new MNIMAPSync(parseCliArguments(args));
             final Timer timer = new Timer(true);
             timer.schedule(
-                new SyncMonitor(sync, sync.targetIndex, sync.sourceCopier, sync.targetDeleter),
+                new SyncMonitor(sync),
                 1000L, 1000L);
             sync.sync();
             timer.cancel();
-            System.out.println(String.format("\r%s",
-                getSummaryReportAsText(sync, sync.sourceCopier, sync.targetDeleter)));
+            System.out.println(String.format("\r%s", getSummaryReportAsText(sync)));
         } catch (IllegalArgumentException | IOException ex) {
             System.err.println(ex.getMessage());
         }
     }
 
-    /**
-     * Open an {@link IMAPStore} for the provided {@link HostDefinition}
-     *
-     * @param host
-     * @return
-     * @throws MessagingException
-     */
-    private static IMAPStore openStore(HostDefinition host, int threads) throws MessagingException {
-        final Properties properties = new Properties();
-        properties.put("mail.debug", "false");
-        properties.put("mail.imap.starttls.enable", true);
-        properties.setProperty("mail.imap.connectionpoolsize", String.valueOf(threads));
-        if (host.isSsl()) {
-            properties.put("mail.imap.ssl.enable", host.isSsl());
-            properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(threads));
-            properties.put("mail.imaps.socketFactory.port", host.getPort());
-            properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
-                    getName());
-            properties.put("mail.imaps.socketFactory.fallback", false);
-        }
-        final Session session = Session.getInstance(properties, null);
-        final IMAPStore ret;
-        if (host.isSsl()) {
-            ret = (IMAPSSLStore) session.getStore("imaps");
-        } else {
-            ret = (IMAPStore) session.getStore("imap");
-        }
-        ret.connect(host.getHost(), host.getPort(), host.getUser(), host.getPassword());
-        return ret;
-    }
 
 }

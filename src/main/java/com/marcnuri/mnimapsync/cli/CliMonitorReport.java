@@ -39,19 +39,19 @@ public class CliMonitorReport extends CliReport {
   private CliMonitorReport() {
   }
 
-  public static String getMonitorReportAsText(MNIMAPSync syncInstance, StoreIndex targetIndex,
-      StoreCopier sourceCopier, StoreDeleter targetDeleter) throws IOException {
+  public static String getMonitorReportAsText(MNIMAPSync syncInstance) throws IOException {
 
     return replaceTemplateVariables(
         loadTemplate(MONITOR_REPORT_TEMPLATE).replaceAll("[\r\n]", ""),
-        initTemplateVariables(syncInstance, targetIndex, sourceCopier, targetDeleter)
+        initTemplateVariables(syncInstance)
     );
   }
 
 
-  private static Map<String, String> initTemplateVariables(MNIMAPSync syncInstance,
-      StoreIndex targetIndex, StoreCopier sourceCopier, StoreDeleter targetDeleter) {
-
+  private static Map<String, String> initTemplateVariables(MNIMAPSync syncInstance) {
+    final StoreIndex targetIndex = syncInstance.getTargetIndex();
+    final StoreCopier sourceCopier = syncInstance.getSourceCopier();
+    final StoreDeleter targetDeleter = syncInstance.getTargetDeleter();
     final Map<String, String> variables = new HashMap<>();
     final long indexedMessageTotalCount =
         targetIndex.getIndexedMessageCount() + targetIndex.getSkippedMessageCount();

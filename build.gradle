@@ -22,6 +22,7 @@ dependencies {
     testCompile('org.junit.jupiter:junit-jupiter:5.5.1')
     testCompile('org.mockito:mockito-core:3.0.0')
     testCompile('org.hamcrest:java-hamcrest:2.0.0.0')
+    testCompile('org.jmockit:jmockit:1.47')
 }
 
 group = 'com.marcnuri'
@@ -32,6 +33,7 @@ sourceCompatibility = 1.8
 mainClassName = 'com.marcnuri.mnimapsync.MNIMAPSync'
 
 test {
+    jvmArgs "-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}"
     useJUnitPlatform()
     finalizedBy jacocoTestReport
 }
