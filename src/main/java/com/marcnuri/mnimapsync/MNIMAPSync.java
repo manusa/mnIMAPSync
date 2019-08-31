@@ -59,7 +59,6 @@ public class MNIMAPSync {
             sourceIndex = null;
         }
         targetIndex = new StoreIndex();
-
     }
 
     private long getElapsedTime() {
@@ -82,47 +81,58 @@ public class MNIMAPSync {
         return getElapsedTime() / 1000L;
     }
 
-    private void sync() {
-        IMAPStore targetStore = null;
-        IMAPStore sourceStore = null;
-        try {
-            targetStore = openStore(syncOptions.getTargetHost(), syncOptions.getThreads());
+    private void indexTargetStore()
+        throws MessagingException, GeneralSecurityException, InterruptedException {
+
+        try (final IMAPStore targetStore = openStore(syncOptions.getTargetHost(),
+            syncOptions.getThreads())) {
             StoreIndex.populateFromStore(targetIndex, targetStore, syncOptions.getThreads());
-            sourceStore = openStore(syncOptions.getSourceHost(), syncOptions.getThreads());
+        }
+    }
+
+    private void copySourceToTarget()
+        throws MessagingException, GeneralSecurityException, InterruptedException {
+
+        try (
+            final IMAPStore targetStore = openStore(syncOptions.getTargetHost(),
+                syncOptions.getThreads());
+            final IMAPStore sourceStore = openStore(syncOptions.getSourceHost(),
+                syncOptions.getThreads())
+        ) {
             sourceCopier = new StoreCopier(sourceStore, sourceIndex, targetStore, targetIndex,
-                    syncOptions.getThreads());
+                syncOptions.getThreads());
             sourceCopier.copy();
-            //Better to disconnect and reconnect. Avoids inactivity disconnections
-            targetStore.close();
-            sourceStore.close();
+        }
+    }
+
+    private void deleteFromTarget()
+        throws MessagingException, GeneralSecurityException, InterruptedException {
+
+        try (
+            final IMAPStore targetStore = openStore(syncOptions.getTargetHost(),
+                syncOptions.getThreads());
+            final IMAPStore sourceStore = openStore(syncOptions.getSourceHost(),
+                syncOptions.getThreads())
+        ) {
+            targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore, syncOptions.
+                getThreads());
+            targetDeleter.delete();
+        }
+    }
+
+    public void sync() {
+        try {
+            indexTargetStore();
+            copySourceToTarget();
             //Delete only if source store was completely indexed (this happens if no exceptions where raised)
             if (syncOptions.getDelete() && sourceIndex != null && !sourceCopier.hasCopyException()) {
-                //Reconnect stores (They can timeout for inactivity.
-                sourceStore = openStore(syncOptions.getSourceHost(), syncOptions.getThreads());
-                targetStore = openStore(syncOptions.getTargetHost(), syncOptions.getThreads());
-                targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore, syncOptions.
-                        getThreads());
-                targetDeleter.delete();
+                deleteFromTarget();
             }
         } catch (MessagingException | GeneralSecurityException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
             Thread.currentThread().interrupt();
-        } finally {
-            if (targetStore != null && targetStore.isConnected()) {
-                try {
-                    targetStore.close();
-                } catch (MessagingException ex) {
-                }
-            }
-            if (sourceStore != null && sourceStore.isConnected()) {
-                try {
-                    sourceStore.close();
-                } catch (MessagingException ex) {
-                }
-            }
-
         }
     }
 
@@ -134,6 +144,7 @@ public class MNIMAPSync {
     /**
      * @param args the command line arguments
      */
+    @SuppressWarnings({"squid:S106", "UseOfSystemOutOrSystemErr"})
     public static void main(String[] args) {
         try {
             final MNIMAPSync sync = new MNIMAPSync(parseCliArguments(args));

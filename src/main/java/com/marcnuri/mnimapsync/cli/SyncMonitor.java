@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
  */
-@SuppressWarnings("squid:S106")
+@SuppressWarnings({"squid:S106", "UseOfSystemOutOrSystemErr"})
 public class SyncMonitor extends TimerTask {
 
   private static final Logger logger = Logger.getLogger(SyncMonitor.class.getName());
@@ -45,7 +45,6 @@ public class SyncMonitor extends TimerTask {
   @Override
   public void run() {
     try {
-      //noinspection UseOfSystemOutOrSystemErr
       System.out.print(String.format("\r%s", getMonitorReportAsText(syncInstance)));
     } catch (IOException ex) {
       logger.log(Level.SEVERE, "", ex);
