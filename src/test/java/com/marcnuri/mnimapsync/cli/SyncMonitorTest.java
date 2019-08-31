@@ -29,8 +29,15 @@ import static org.mockito.Mockito.spy;
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.marcnuri.mnimapsync.store.StoreIndex;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Formatter;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.StreamHandler;
+import mockit.Mock;
+import mockit.MockUp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,12 +46,19 @@ import org.junit.jupiter.api.Test;
  */
 class SyncMonitorTest {
 
-  private ByteArrayOutputStream systemOut;
+  private ByteArrayOutputStream outputBuffer;
 
   @BeforeEach
   void setUp() {
-    systemOut = spy(new ByteArrayOutputStream());
-    System.setOut(new PrintStream(systemOut));
+    outputBuffer = spy(new ByteArrayOutputStream());
+    System.setOut(new PrintStream(outputBuffer));
+    Logger.getLogger(SyncMonitor.class.getName())
+        .addHandler(new StreamHandler(outputBuffer, new Formatter() {
+          @Override
+          public String format(LogRecord record) {
+            return record.getThrown().getMessage();
+          }
+        }));
   }
 
   @Test
@@ -56,8 +70,26 @@ class SyncMonitorTest {
     // When
     syncMonitor.run();
     // Then
-    assertThat(systemOut.toString(StandardCharsets.UTF_8.name()),
+    assertThat(outputBuffer.toString(StandardCharsets.UTF_8.name()),
         is("\rIndexed (target): 0/0  Copied: 0/0 Deleted: 0/0 Speed: 0 m/s"));
+  }
+
+  @Test
+  void run_throwsException_shouldLogException() throws Exception {
+    // Given
+    new MockUp<CliMonitorReport>() {
+      @Mock
+      @SuppressWarnings("unused")
+      String getMonitorReportAsText(MNIMAPSync syncInstance) throws IOException {
+        throw new IOException("Everything is fine");
+      }
+    };
+    final SyncMonitor syncMonitor = new SyncMonitor(null);
+    // When
+    syncMonitor.run();
+    // Then
+    Logger.getLogger(SyncMonitor.class.getName()).getHandlers()[0].flush();
+    assertThat(outputBuffer.toString(StandardCharsets.UTF_8.name()), is("Everything is fine"));
   }
 
 }
