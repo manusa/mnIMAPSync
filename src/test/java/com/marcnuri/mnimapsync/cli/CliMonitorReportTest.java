@@ -42,11 +42,9 @@ class CliMonitorReportTest {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
     final StoreIndex storeIndex = mock(StoreIndex.class);
-    final StoreCopier storeCopier = null;
-    final StoreDeleter storeDeleter = null;
+    doReturn(storeIndex).when(syncInstance).getTargetIndex();
     // When
-    final String result = getMonitorReportAsText(syncInstance, storeIndex, storeCopier,
-        storeDeleter);
+    final String result = getMonitorReportAsText(syncInstance);
     // Then
     assertThat(result, is("Indexed (target): 0/0  Copied: 0/0 Deleted: 0/0 Speed: 0 m/s"));
   }
@@ -56,16 +54,16 @@ class CliMonitorReportTest {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
     final StoreIndex storeIndex = mock(StoreIndex.class);
+    doReturn(storeIndex).when(syncInstance).getTargetIndex();
     doReturn(0L).when(storeIndex).getIndexedMessageCount();
     doReturn(1337L).when(storeIndex).getSkippedMessageCount();
     final StoreCopier storeCopier = mock(StoreCopier.class);
+    doReturn(storeCopier).when(syncInstance).getSourceCopier();
     doReturn(1L).when(storeCopier).getMessagesCopiedCount();
     doReturn(336L).when(storeCopier).getMessagesSkippedCount();
     doReturn(253L).when(syncInstance).getElapsedTimeInSeconds();
-    final StoreDeleter storeDeleter = null;
     // When
-    final String result = getMonitorReportAsText(syncInstance, storeIndex, storeCopier,
-        storeDeleter);
+    final String result = getMonitorReportAsText(syncInstance);
     // Then
     assertThat(result, is("Indexed (target): 0/1337  Copied: 1/337 Deleted: 0/0 Speed: 1.33 m/s"));
   }
@@ -75,18 +73,20 @@ class CliMonitorReportTest {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
     final StoreIndex storeIndex = mock(StoreIndex.class);
+    doReturn(storeIndex).when(syncInstance).getTargetIndex();
     doReturn(0L).when(storeIndex).getIndexedMessageCount();
     doReturn(1337L).when(storeIndex).getSkippedMessageCount();
     final StoreCopier storeCopier = mock(StoreCopier.class);
+    doReturn(storeCopier).when(syncInstance).getSourceCopier();
     doReturn(1L).when(storeCopier).getMessagesCopiedCount();
     doReturn(336L).when(storeCopier).getMessagesSkippedCount();
     doReturn(253L).when(syncInstance).getElapsedTimeInSeconds();
     final StoreDeleter storeDeleter = mock(StoreDeleter.class);
+    doReturn(storeDeleter).when(syncInstance).getTargetDeleter();
     doReturn(13L).when(storeDeleter).getMessagesDeletedCount();
     doReturn(24L).when(storeDeleter).getMessagesSkippedCount();
     // When
-    final String result = getMonitorReportAsText(syncInstance, storeIndex, storeCopier,
-        storeDeleter);
+    final String result = getMonitorReportAsText(syncInstance);
     // Then
     assertThat(result, is("Indexed (target): 0/1337  Copied: 1/337 Deleted: 13/37 Speed: 1.33 m/s"));
   }
