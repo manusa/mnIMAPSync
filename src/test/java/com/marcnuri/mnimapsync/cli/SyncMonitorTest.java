@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -88,7 +89,7 @@ class SyncMonitorTest {
     // When
     syncMonitor.run();
     // Then
-    Logger.getLogger(SyncMonitor.class.getName()).getHandlers()[0].flush();
+    Arrays.stream(Logger.getLogger(SyncMonitor.class.getName()).getHandlers()).forEach(s -> s.flush());
     assertThat(outputBuffer.toString(StandardCharsets.UTF_8.name()), is("Everything is fine"));
   }
 
