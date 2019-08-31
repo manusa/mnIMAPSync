@@ -26,6 +26,7 @@ import com.marcnuri.mnimapsync.store.StoreDeleter;
 import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.sun.mail.imap.IMAPStore;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.Timer;
 import java.util.logging.Level;
@@ -103,7 +104,7 @@ public class MNIMAPSync {
                         getThreads());
                 targetDeleter.delete();
             }
-        } catch (MessagingException ex) {
+        } catch (MessagingException | GeneralSecurityException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);

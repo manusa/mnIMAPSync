@@ -21,9 +21,10 @@
 package com.marcnuri.mnimapsync.imap;
 
 import com.marcnuri.mnimapsync.HostDefinition;
-import com.marcnuri.mnimapsync.ssl.AllowAllSSLSocketFactory;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
+import com.sun.mail.util.MailSSLSocketFactory;
+import java.security.GeneralSecurityException;
 import java.util.Properties;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -32,6 +33,16 @@ import javax.mail.Session;
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
  */
 public class IMAPUtils {
+
+  private static MailSSLSocketFactory mailSSLSocketFactory;
+
+  private static MailSSLSocketFactory getSSLSocketFactory() throws GeneralSecurityException {
+    if (mailSSLSocketFactory == null) {
+      mailSSLSocketFactory = new MailSSLSocketFactory();
+      mailSSLSocketFactory.setTrustAllHosts(true);
+    }
+    return mailSSLSocketFactory;
+  }
 
   private IMAPUtils() {
   }
@@ -44,7 +55,7 @@ public class IMAPUtils {
    * @return the open IMAPStore
    */
   public static IMAPStore openStore(HostDefinition hostDefinition, int threads)
-      throws MessagingException {
+      throws MessagingException, GeneralSecurityException {
     final Properties properties = new Properties();
     properties.put("mail.debug", "false");
     properties.put("mail.imap.starttls.enable", true);
@@ -53,9 +64,8 @@ public class IMAPUtils {
       properties.put("mail.imap.ssl.enable", hostDefinition.isSsl());
       properties.setProperty("mail.imaps.connectionpoolsize", String.valueOf(threads));
       properties.put("mail.imaps.socketFactory.port", hostDefinition.getPort());
-      properties.put("mail.imaps.socketFactory.class", AllowAllSSLSocketFactory.class.
-          getName());
-      properties.put("mail.imaps.socketFactory.fallback", false);
+      properties.put("mail.imap.ssl.socketFactory", getSSLSocketFactory());
+      properties.put("mail.imap.ssl.socketFactory.fallback", false);
     }
     final Session session = Session.getInstance(properties, null);
     final IMAPStore ret;
