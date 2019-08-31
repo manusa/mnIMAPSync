@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
  */
+@SuppressWarnings("squid:S106")
 public class SyncMonitor extends TimerTask {
 
   private static final Logger logger = Logger.getLogger(SyncMonitor.class.getName());
