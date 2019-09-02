@@ -21,7 +21,6 @@
 package com.marcnuri.mnimapsync.store;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -39,7 +38,7 @@ import org.mockito.Mockito;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-18.
  */
-public class StoreCopierTest {
+class StoreCopierTest {
 
   private IMAPFolder imapFolder;
   private IMAPStore imapStore;
@@ -57,7 +56,9 @@ public class StoreCopierTest {
     doReturn(imapFolder).when(imapStore).getFolder(anyString());
     doReturn(imapFolder).when(imapStore).getDefaultFolder();
     sourceIndex = Mockito.spy(new StoreIndex());
+    sourceIndex.setFolderSeparator(".");
     targetIndex = Mockito.spy(new StoreIndex());
+    targetIndex.setFolderSeparator("_");
   }
 
   @AfterEach
@@ -80,14 +81,14 @@ public class StoreCopierTest {
     assertThat(storeCopier.hasCopyException(), equalTo(false));
     assertThat(storeCopier.getFoldersCopiedCount(), equalTo(1));
     assertThat(storeCopier.getFoldersSkippedCount(), equalTo(0));
-    assertThat(sourceIndex.getFolders(), containsInRelativeOrder(equalTo("INBOX")));
+    assertThat(sourceIndex.containsFolder("INBOX"), equalTo(true));
   }
 
   @Test
   void copy_targetContainsCurrentFolder_shouldNotCopyFoldersAndMessages() throws Exception {
     // Given
     doReturn(true).when(imapFolder).create(eq(Folder.HOLDS_MESSAGES | Folder.HOLDS_FOLDERS));
-    targetIndex.getFolders().add("INBOX");
+    targetIndex.addFolder("INBOX");
     final StoreCopier storeCopier = new StoreCopier(imapStore, sourceIndex, imapStore, targetIndex, 1);
     // When
     storeCopier.copy();
@@ -96,6 +97,6 @@ public class StoreCopierTest {
     assertThat(storeCopier.hasCopyException(), equalTo(false));
     assertThat(storeCopier.getFoldersCopiedCount(), equalTo(0));
     assertThat(storeCopier.getFoldersSkippedCount(), equalTo(1));
-    assertThat(sourceIndex.getFolders(), containsInRelativeOrder(equalTo("INBOX")));
+    assertThat(sourceIndex.containsFolder("INBOX"), equalTo(true));
   }
 }

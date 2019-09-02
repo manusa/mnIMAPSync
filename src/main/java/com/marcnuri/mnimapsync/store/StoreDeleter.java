@@ -16,6 +16,8 @@
  */
 package com.marcnuri.mnimapsync.store;
 
+import static com.marcnuri.mnimapsync.imap.IMAPUtils.targetToSourceFolderName;
+
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
@@ -36,24 +38,21 @@ import javax.mail.MessagingException;
 public class StoreDeleter {
 
     private final ExecutorService service;
-    private final IMAPStore sourceStore;
-    private final char sourceSeparator;
     private final IMAPStore targetStore;
-    private final char targetSeparator;
+    private final StoreIndex targetIndex;
     private final StoreIndex sourceIndex;
     private final AtomicInteger foldersDeletedCount;
     private final AtomicInteger foldersSkippedCount;
     private final AtomicLong messagesDeletedCount;
     private final AtomicLong messagesSkippedCount;
 
-    public StoreDeleter(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
-            int threads) throws MessagingException {
+    public StoreDeleter(StoreIndex sourceIndex, StoreIndex targetIndex, IMAPStore targetStore,
+        int threads) {
+
         service = Executors.newFixedThreadPool(threads);
-        this.sourceStore = sourceStore;
-        this.sourceSeparator = sourceStore.getDefaultFolder().getSeparator();
         this.targetStore = targetStore;
-        this.targetSeparator = targetStore.getDefaultFolder().getSeparator();
         this.sourceIndex = sourceIndex;
+        this.targetIndex = targetIndex;
         this.foldersDeletedCount = new AtomicInteger();
         this.foldersSkippedCount = new AtomicInteger();
         this.messagesDeletedCount = new AtomicLong();
@@ -76,8 +75,7 @@ public class StoreDeleter {
     private void deleteTargetMessages(IMAPFolder targetFolder) throws MessagingException {
         if (targetFolder != null) {
             final String targetFolderName = targetFolder.getFullName();
-            final String sourceFolderName = MNIMAPSync.translateFolderName(targetSeparator,
-                    sourceSeparator, targetFolderName);
+            final String sourceFolderName = targetToSourceFolderName(targetFolderName, sourceIndex, targetIndex);
             if ((targetFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 targetFolder.open(Folder.READ_WRITE);
                 if (targetFolder.getMode() != Folder.READ_ONLY) {
@@ -107,11 +105,9 @@ public class StoreDeleter {
 
     private void deleteTargetFolder(Folder folder) throws MessagingException {
         final String targetFolderName = folder.getFullName();
-        final String sourceFolderName = MNIMAPSync.translateFolderName(targetSeparator,
-                sourceSeparator,
-                targetFolderName);
+        final String sourceFolderName = targetToSourceFolderName(targetFolderName, sourceIndex, targetIndex);
         //Delete folder
-        if (!sourceIndex.getFolders().contains(sourceFolderName)) {
+        if (!sourceIndex.containsFolder(sourceFolderName)) {
             //Delete recursively
             targetStore.getFolder(targetFolderName).delete(true);
             updatedFoldersDeletedCount(1);

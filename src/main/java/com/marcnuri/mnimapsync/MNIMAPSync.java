@@ -53,11 +53,7 @@ public class MNIMAPSync {
         this.syncOptions = syncOptions;
         startDate = new Date();
         sourceCopier = null;
-        if (syncOptions.getDelete()) {
-            sourceIndex = new StoreIndex();
-        } else {
-            sourceIndex = null;
-        }
+        sourceIndex = new StoreIndex();
         targetIndex = new StoreIndex();
     }
 
@@ -110,12 +106,10 @@ public class MNIMAPSync {
 
         try (
             final IMAPStore targetStore = openStore(syncOptions.getTargetHost(),
-                syncOptions.getThreads());
-            final IMAPStore sourceStore = openStore(syncOptions.getSourceHost(),
                 syncOptions.getThreads())
         ) {
-            targetDeleter = new StoreDeleter(sourceStore, sourceIndex, targetStore, syncOptions.
-                getThreads());
+            targetDeleter = new StoreDeleter(sourceIndex, targetIndex, targetStore,
+                syncOptions.getThreads());
             targetDeleter.delete();
         }
     }
@@ -134,11 +128,6 @@ public class MNIMAPSync {
             Logger.getLogger(MNIMAPSync.class.getName()).log(Level.SEVERE, null, ex);
             Thread.currentThread().interrupt();
         }
-    }
-
-    public static String translateFolderName(char originalSeparator, char newSeparator,
-            String url) {
-        return url.replace(originalSeparator, newSeparator);
     }
 
     /**

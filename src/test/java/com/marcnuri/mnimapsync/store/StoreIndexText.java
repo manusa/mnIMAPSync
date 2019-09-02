@@ -21,7 +21,6 @@
 package com.marcnuri.mnimapsync.store;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -44,7 +43,7 @@ import org.mockito.Mockito;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-20.
  */
-public class StoreIndexText {
+class StoreIndexText {
 
   private IMAPFolder defaultFolder;
   private IMAPStore imapStore;
@@ -76,7 +75,9 @@ public class StoreIndexText {
     StoreIndex.populateFromStore(storeIndex, imapStore, 1);
     // Then
     verify(defaultFolder, times(1)).expunge();
-    assertThat(storeIndex.getFolders(), containsInRelativeOrder("INBOX", "Folder 1", "Folder 2"));
+    assertThat(storeIndex.containsFolder("INBOX"), equalTo(true));
+    assertThat(storeIndex.containsFolder("Folder 1"), equalTo(true));
+    assertThat(storeIndex.containsFolder("Folder 2"), equalTo(true));
     assertThat(storeIndex.getCrawlExceptions(), empty());
     assertThat(storeIndex.hasCrawlException(), equalTo(false));
   }

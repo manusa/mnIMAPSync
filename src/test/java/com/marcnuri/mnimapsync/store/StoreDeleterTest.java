@@ -36,27 +36,31 @@ import org.mockito.Mockito;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-19.
  */
-public class StoreDeleterTest {
+class StoreDeleterTest {
 
   private IMAPFolder imapFolder;
   private IMAPStore imapStore;
   private StoreIndex sourceIndex;
+  private StoreIndex targetIndex;
 
   @BeforeEach
   void setUp() throws Exception {
     imapFolder = Mockito.mock(IMAPFolder.class);
-    doReturn('.').doReturn('_').when(imapFolder).getSeparator();
-    doReturn("INBOX").when(imapFolder).getFullName();
+    doReturn("MissingFolder").when(imapFolder).getFullName();
     doReturn(Folder.HOLDS_MESSAGES | Folder.HOLDS_FOLDERS).when(imapFolder).getType();
     doReturn(new Folder[0]).when(imapFolder).list();
     imapStore = Mockito.mock(IMAPStore.class);
     doReturn(imapFolder).when(imapStore).getFolder(anyString());
     doReturn(imapFolder).when(imapStore).getDefaultFolder();
     sourceIndex = Mockito.spy(new StoreIndex());
+    sourceIndex.setFolderSeparator(".");
+    targetIndex = Mockito.spy(new StoreIndex());
+    targetIndex.setFolderSeparator("_");
   }
 
   @AfterEach
   void tearDown() {
+    targetIndex = null;
     sourceIndex = null;
     imapStore = null;
     imapFolder = null;
@@ -65,7 +69,7 @@ public class StoreDeleterTest {
   @Test
   void delete_sourceFolderDoesntExistAndTargetExists_shouldDeleteFoldersAndMessages() throws Exception {
     // Given
-    final StoreDeleter storeDeleter = new StoreDeleter(imapStore, sourceIndex, imapStore, 1);
+    final StoreDeleter storeDeleter = new StoreDeleter(sourceIndex, targetIndex, imapStore, 1);
     // When
     storeDeleter.delete();
     // Then
@@ -78,8 +82,8 @@ public class StoreDeleterTest {
   @Test
   void delete_sourceFolderAndTargetExist_shouldNotDeleteFoldersAndMessages() throws Exception {
     // Given
-    sourceIndex.getFolders().add("INBOX");
-    final StoreDeleter storeDeleter = new StoreDeleter(imapStore, sourceIndex, imapStore, 1);
+    sourceIndex.addFolder("MissingFolder");
+    final StoreDeleter storeDeleter = new StoreDeleter(sourceIndex, targetIndex, imapStore, 1);
     // When
     storeDeleter.delete();
     // Then

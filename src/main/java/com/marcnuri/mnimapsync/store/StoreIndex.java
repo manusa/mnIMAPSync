@@ -16,6 +16,8 @@
  */
 package com.marcnuri.mnimapsync.store;
 
+import static com.marcnuri.mnimapsync.imap.IMAPUtils.INBOX_MAILBOX;
+
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.sun.mail.imap.IMAPStore;
 import java.util.ArrayList;
@@ -25,10 +27,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
 
@@ -38,7 +42,9 @@ import javax.mail.MessagingException;
  */
 public class StoreIndex {
 
-    private final List<String> folders;
+    private AtomicReference<String> folderSeparator;
+    private AtomicReference<String> inbox;
+    private final Set<String> folders;
     private final Map<String, Set<MessageId>> folderMessages;
     private final AtomicLong indexedMessageCount;
     private final AtomicLong skippedMessageCount;
@@ -46,7 +52,9 @@ public class StoreIndex {
     private final List<MessagingException> crawlExceptions;
 
     public StoreIndex() {
-        this.folders = Collections.synchronizedList(new ArrayList<>());
+        this.folderSeparator = new AtomicReference<>();
+        this.inbox = new AtomicReference<>();
+        this.folders = ConcurrentHashMap.newKeySet();
         this.folderMessages = Collections.synchronizedMap(new HashMap<>());
         this.indexedMessageCount = new AtomicLong();
         this.skippedMessageCount = new AtomicLong();
@@ -67,8 +75,31 @@ public class StoreIndex {
         skippedMessageCount.getAndAdd(delta);
     }
 
-    public final synchronized List<String> getFolders() {
-        return folders;
+    public String getFolderSeparator() {
+        return folderSeparator.get();
+    }
+
+    void setFolderSeparator(String folderSeparator) {
+        this.folderSeparator.set(folderSeparator);
+    }
+
+    public String getInbox() {
+        return inbox.get();
+    }
+
+    private void setInbox(String inbox) {
+        this.inbox.set(inbox);
+    }
+
+    public final void addFolder(String folderFullName) {
+        if (folderFullName.equalsIgnoreCase(INBOX_MAILBOX) && getInbox() == null) {
+            setInbox(folderFullName);
+        }
+        folders.add(folderFullName);
+    }
+
+    public boolean containsFolder(String folder) {
+        return folders.contains(folder);
     }
 
     public final long getIndexedMessageCount() {
@@ -105,19 +136,17 @@ public class StoreIndex {
     public static StoreIndex populateFromStore(final StoreIndex index, IMAPStore store,
             int threads) throws MessagingException, InterruptedException {
         MessagingException messagingException = null;
-        //Crawl
-        synchronized (index.getFolders()) {
-            final ExecutorService service = Executors.newFixedThreadPool(threads);
-            try {
-                crawlFolders(store, index, store.getDefaultFolder(), service);
-            } catch (MessagingException ex) {
-                messagingException = ex;
-            }
-            service.shutdown();
-            service.awaitTermination(1, TimeUnit.HOURS);
-            if (index.hasCrawlException()) {
-                messagingException = index.getCrawlExceptions().get(0);
-            }
+        final ExecutorService service = Executors.newFixedThreadPool(threads);
+        try {
+            index.setFolderSeparator(String.valueOf(store.getDefaultFolder().getSeparator()));
+            crawlFolders(store, index, store.getDefaultFolder(), service);
+        } catch (MessagingException ex) {
+            messagingException = ex;
+        }
+        service.shutdown();
+        service.awaitTermination(1, TimeUnit.HOURS);
+        if (index.hasCrawlException()) {
+            messagingException = index.getCrawlExceptions().get(0);
         }
         if (messagingException != null) {
             throw messagingException;
@@ -129,7 +158,7 @@ public class StoreIndex {
             ExecutorService service) throws MessagingException {
         if (folder != null) {
             final String folderName = folder.getFullName();
-            storeIndex.getFolders().add(folderName);
+            storeIndex.addFolder(folderName);
             if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 folder.open(Folder.READ_ONLY);
                 if (folder.getMode() != Folder.READ_ONLY) {
