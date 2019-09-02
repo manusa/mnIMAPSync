@@ -27,7 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import com.marcnuri.mnimapsync.MNIMAPSync;
-import com.marcnuri.mnimapsync.store.StoreIndex;
+import com.marcnuri.mnimapsync.index.Index;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -40,11 +40,15 @@ import java.util.logging.StreamHandler;
 import mockit.Mock;
 import mockit.MockUp;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
  */
+@TestMethodOrder(OrderAnnotation.class)
 class SyncMonitorTest {
 
   private ByteArrayOutputStream outputBuffer;
@@ -63,10 +67,11 @@ class SyncMonitorTest {
   }
 
   @Test
+  @Order(2)
   void run_validMonitorPrint_shouldPrintToSystemOut() throws Exception {
     // Given
     final MNIMAPSync mnImapSync = mock(MNIMAPSync.class);
-    doReturn(mock(StoreIndex.class)).when(mnImapSync).getTargetIndex();
+    doReturn(mock(Index.class)).when(mnImapSync).getTargetIndex();
     final SyncMonitor syncMonitor = new SyncMonitor(mnImapSync);
     // When
     syncMonitor.run();
@@ -76,6 +81,7 @@ class SyncMonitorTest {
   }
 
   @Test
+  @Order(1)
   void run_throwsException_shouldLogException() throws Exception {
     // Given
     new MockUp<CliMonitorReport>() {

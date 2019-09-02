@@ -14,12 +14,10 @@
  * limitations under the License.
  *
  */
-package com.marcnuri.mnimapsync.store;
+package com.marcnuri.mnimapsync.index;
 
 import static com.marcnuri.mnimapsync.imap.IMAPUtils.INBOX_MAILBOX;
 
-import com.marcnuri.mnimapsync.MNIMAPSync;
-import com.sun.mail.imap.IMAPStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,19 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.mail.Folder;
 import javax.mail.MessagingException;
 
 /**
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */
-public class StoreIndex {
+public class Index {
 
     private AtomicReference<String> folderSeparator;
     private AtomicReference<String> inbox;
@@ -51,7 +45,7 @@ public class StoreIndex {
     //If no empty, the other processes shouldn't continue
     private final List<MessagingException> crawlExceptions;
 
-    public StoreIndex() {
+    public Index() {
         this.folderSeparator = new AtomicReference<>();
         this.inbox = new AtomicReference<>();
         this.folders = ConcurrentHashMap.newKeySet();
@@ -67,7 +61,7 @@ public class StoreIndex {
         }
     }
 
-    protected final void updatedIndexedMessageCount(long delta) {
+    public final void updatedIndexedMessageCount(long delta) {
         indexedMessageCount.getAndAdd(delta);
     }
 
@@ -79,7 +73,7 @@ public class StoreIndex {
         return folderSeparator.get();
     }
 
-    void setFolderSeparator(String folderSeparator) {
+    public void setFolderSeparator(String folderSeparator) {
         this.folderSeparator.set(folderSeparator);
     }
 
@@ -123,64 +117,5 @@ public class StoreIndex {
         return crawlExceptions;
     }
 
-    /**
-     * Static method to populate a {@link StoreIndex} with the messages in an {@link IMAPStore}
-     *
-     * @param index
-     * @param store
-     * @param threads
-     * @return
-     * @throws MessagingException
-     * @throws InterruptedException
-     */
-    public static StoreIndex populateFromStore(final StoreIndex index, IMAPStore store,
-            int threads) throws MessagingException, InterruptedException {
-        MessagingException messagingException = null;
-        final ExecutorService service = Executors.newFixedThreadPool(threads);
-        try {
-            index.setFolderSeparator(String.valueOf(store.getDefaultFolder().getSeparator()));
-            crawlFolders(store, index, store.getDefaultFolder(), service);
-        } catch (MessagingException ex) {
-            messagingException = ex;
-        }
-        service.shutdown();
-        service.awaitTermination(1, TimeUnit.HOURS);
-        if (index.hasCrawlException()) {
-            messagingException = index.getCrawlExceptions().get(0);
-        }
-        if (messagingException != null) {
-            throw messagingException;
-        }
-        return index;
-    }
-
-    private static void crawlFolders(IMAPStore store, StoreIndex storeIndex, Folder folder,
-            ExecutorService service) throws MessagingException {
-        if (folder != null) {
-            final String folderName = folder.getFullName();
-            storeIndex.addFolder(folderName);
-            if ((folder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
-                folder.open(Folder.READ_ONLY);
-                if (folder.getMode() != Folder.READ_ONLY) {
-                    folder.expunge();
-                }
-                final int messageCount = folder.getMessageCount();
-                folder.close(false);
-                int pos = 1;
-                while (pos + MNIMAPSync.BATCH_SIZE <= messageCount) {
-                    service.execute(new FolderCrawler(store, folderName, pos,
-                            pos + MNIMAPSync.BATCH_SIZE, storeIndex));
-                    pos = pos + MNIMAPSync.BATCH_SIZE;
-                }
-                service.execute(new FolderCrawler(store, folderName, pos, messageCount, storeIndex));
-            }
-            //Folder recursion. Get all children
-            if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
-                for (Folder child : folder.list()) {
-                    crawlFolders(store, storeIndex, child, service);
-                }
-            }
-        }
-    }
 
 }

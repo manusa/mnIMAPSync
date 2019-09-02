@@ -19,6 +19,7 @@ package com.marcnuri.mnimapsync.store;
 import static com.marcnuri.mnimapsync.imap.IMAPUtils.sourceFolderNameToTarget;
 
 import com.marcnuri.mnimapsync.MNIMAPSync;
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 import java.util.ArrayList;
@@ -44,8 +45,8 @@ public final class StoreCopier {
     private final ExecutorService service;
     private final IMAPStore sourceStore;
     private final IMAPStore targetStore;
-    private final StoreIndex sourceIndex;
-    private final StoreIndex targetIndex;
+    private final Index sourceIndex;
+    private final Index targetIndex;
     private final AtomicInteger foldersCopiedCount;
     private final AtomicInteger foldersSkippedCount;
     private final AtomicLong messagesCopiedCount;
@@ -53,8 +54,8 @@ public final class StoreCopier {
     //If no empty, we shouldn't allow deletion
     private final List<MessagingException> copyExceptions;
 
-    public StoreCopier(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
-            StoreIndex targetIndex, int threads) {
+    public StoreCopier(IMAPStore sourceStore, Index sourceIndex, IMAPStore targetStore,
+            Index targetIndex, int threads) {
         this.sourceStore = sourceStore;
         this.sourceIndex = sourceIndex;
         this.targetStore = targetStore;
@@ -205,7 +206,7 @@ public final class StoreCopier {
         return sourceStore;
     }
 
-    final StoreIndex getSourceIndex() {
+    final Index getSourceIndex() {
         return sourceIndex;
     }
 

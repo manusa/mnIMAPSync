@@ -21,7 +21,7 @@
 package com.marcnuri.mnimapsync.imap;
 
 import com.marcnuri.mnimapsync.HostDefinition;
-import com.marcnuri.mnimapsync.store.StoreIndex;
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.util.MailSSLSocketFactory;
@@ -90,18 +90,18 @@ public class IMAPUtils {
     return Optional.empty();
   }
 
-  private static String translateFolder(String folderName, StoreIndex sourceIndex, StoreIndex targetIndex) {
+  private static String translateFolder(String folderName, Index sourceIndex, Index targetIndex) {
     return folderName.replace(sourceIndex.getFolderSeparator(), targetIndex.getFolderSeparator());
   }
 
   public static String sourceFolderNameToTarget(String sourceFolderFullName,
-      StoreIndex sourceIndex, StoreIndex targetIndex) {
+      Index sourceIndex, Index targetIndex) {
 
     return translateInbox(sourceFolderFullName, targetIndex.getInbox())
         .orElse(translateFolder(sourceFolderFullName, sourceIndex, targetIndex));
   }
   public static String targetToSourceFolderName(String targetFolderFullName,
-      StoreIndex sourceIndex, StoreIndex targetIndex) {
+      Index sourceIndex, Index targetIndex) {
 
     return translateInbox(targetFolderFullName, sourceIndex.getInbox())
         .orElse(translateFolder(targetFolderFullName, targetIndex, sourceIndex));

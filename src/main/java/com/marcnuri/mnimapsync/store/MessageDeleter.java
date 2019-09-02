@@ -16,6 +16,8 @@
  */
 package com.marcnuri.mnimapsync.store;
 
+import com.marcnuri.mnimapsync.index.Index;
+import com.marcnuri.mnimapsync.index.MessageId;
 import com.sun.mail.imap.IMAPMessage;
 import java.util.Set;
 import java.util.logging.Level;
@@ -80,7 +82,7 @@ public final class MessageDeleter implements Runnable {
                 targetFolder.close(expunge);
             }
         } catch (MessagingException messagingException) {
-            Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null, messagingException);
+            Logger.getLogger(Index.class.getName()).log(Level.SEVERE, null, messagingException);
         }
         storeDeleter.updatedMessagesDeletedCount(deleted);
         storeDeleter.updateMessagesSkippedCount(skipped);

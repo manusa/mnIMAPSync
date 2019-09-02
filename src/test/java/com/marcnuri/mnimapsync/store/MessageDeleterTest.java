@@ -28,6 +28,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.marcnuri.mnimapsync.index.Index;
+import com.marcnuri.mnimapsync.index.MessageId;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
@@ -47,8 +49,8 @@ class MessageDeleterTest {
 
   private IMAPFolder imapFolder;
   private IMAPStore imapStore;
-  private StoreIndex sourceIndex;
-  private StoreIndex targetIndex;
+  private Index sourceIndex;
+  private Index targetIndex;
   private StoreDeleter storeDeleter;
 
   @BeforeEach
@@ -57,9 +59,9 @@ class MessageDeleterTest {
     imapStore = Mockito.mock(IMAPStore.class);
     doReturn(imapFolder).when(imapStore).getFolder(anyString());
     doReturn(imapFolder).when(imapStore).getDefaultFolder();
-    sourceIndex = Mockito.spy(new StoreIndex());
+    sourceIndex = Mockito.spy(new Index());
     sourceIndex.setFolderSeparator(".");
-    targetIndex = Mockito.spy(new StoreIndex());
+    targetIndex = Mockito.spy(new Index());
     targetIndex.setFolderSeparator("_");
     storeDeleter = Mockito.spy(new StoreDeleter(sourceIndex, targetIndex, imapStore, 1));
   }

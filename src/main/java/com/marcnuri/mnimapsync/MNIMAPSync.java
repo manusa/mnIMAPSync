@@ -19,11 +19,12 @@ package com.marcnuri.mnimapsync;
 import static com.marcnuri.mnimapsync.cli.ArgumentParser.parseCliArguments;
 import static com.marcnuri.mnimapsync.cli.CliSummaryReport.getSummaryReportAsText;
 import static com.marcnuri.mnimapsync.imap.IMAPUtils.openStore;
+import static com.marcnuri.mnimapsync.index.StoreCrawler.populateFromStore;
 
 import com.marcnuri.mnimapsync.cli.SyncMonitor;
+import com.marcnuri.mnimapsync.index.Index;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
-import com.marcnuri.mnimapsync.store.StoreIndex;
 import com.sun.mail.imap.IMAPStore;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -46,15 +47,15 @@ public class MNIMAPSync {
     private StoreCopier sourceCopier;
     private StoreDeleter targetDeleter;
     //Used for deleting tasks unnecessary if not deleting
-    private final StoreIndex sourceIndex;
-    private final StoreIndex targetIndex;
+    private final Index sourceIndex;
+    private final Index targetIndex;
 
     public MNIMAPSync(SyncOptions syncOptions) {
         this.syncOptions = syncOptions;
         startDate = new Date();
         sourceCopier = null;
-        sourceIndex = new StoreIndex();
-        targetIndex = new StoreIndex();
+        sourceIndex = new Index();
+        targetIndex = new Index();
     }
 
     private long getElapsedTime() {
@@ -69,7 +70,7 @@ public class MNIMAPSync {
         return targetDeleter;
     }
 
-    public StoreIndex getTargetIndex() {
+    public Index getTargetIndex() {
         return targetIndex;
     }
 
@@ -82,7 +83,7 @@ public class MNIMAPSync {
 
         try (final IMAPStore targetStore = openStore(syncOptions.getTargetHost(),
             syncOptions.getThreads())) {
-            StoreIndex.populateFromStore(targetIndex, targetStore, syncOptions.getThreads());
+            populateFromStore(targetIndex, targetStore, syncOptions.getThreads());
         }
     }
 

@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 import javax.mail.Folder;
@@ -42,8 +43,8 @@ class StoreCopierTest {
 
   private IMAPFolder imapFolder;
   private IMAPStore imapStore;
-  private StoreIndex sourceIndex;
-  private StoreIndex targetIndex;
+  private Index sourceIndex;
+  private Index targetIndex;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -55,9 +56,9 @@ class StoreCopierTest {
     imapStore = Mockito.mock(IMAPStore.class);
     doReturn(imapFolder).when(imapStore).getFolder(anyString());
     doReturn(imapFolder).when(imapStore).getDefaultFolder();
-    sourceIndex = Mockito.spy(new StoreIndex());
+    sourceIndex = Mockito.spy(new Index());
     sourceIndex.setFolderSeparator(".");
-    targetIndex = Mockito.spy(new StoreIndex());
+    targetIndex = Mockito.spy(new Index());
     targetIndex.setFolderSeparator("_");
   }
 

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.marcnuri.mnimapsync.HostDefinition;
-import com.marcnuri.mnimapsync.store.StoreIndex;
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import java.util.Properties;
@@ -50,8 +50,8 @@ import org.junit.jupiter.api.Test;
 class IMAPUtilsTest {
 
   private Session session;
-  private StoreIndex sourceIndex;
-  private StoreIndex targetIndex;
+  private Index sourceIndex;
+  private Index targetIndex;
 
   @BeforeEach
   @SuppressWarnings("unused")
@@ -63,10 +63,10 @@ class IMAPUtilsTest {
         return session;
       }
     };
-    sourceIndex = mock(StoreIndex.class);
+    sourceIndex = mock(Index.class);
     doReturn(".").when(sourceIndex).getFolderSeparator();
     doReturn("InBox").when(sourceIndex).getInbox();
-    targetIndex = mock(StoreIndex.class);
+    targetIndex = mock(Index.class);
     doReturn("|").when(targetIndex).getFolderSeparator();
     doReturn("inbox").when(targetIndex).getInbox();
   }

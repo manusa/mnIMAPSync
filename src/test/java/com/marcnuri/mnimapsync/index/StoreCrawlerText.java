@@ -1,5 +1,5 @@
 /*
- * StoreIndexText.java
+ * StoreCrawlerText.java
  *
  * Created on 2019-08-20, 6:46
  *
@@ -18,8 +18,9 @@
  * limitations under the License.
  *
  */
-package com.marcnuri.mnimapsync.store;
+package com.marcnuri.mnimapsync.index;
 
+import static com.marcnuri.mnimapsync.index.StoreCrawler.populateFromStore;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -43,7 +44,7 @@ import org.mockito.Mockito;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-20.
  */
-class StoreIndexText {
+class StoreCrawlerText {
 
   private IMAPFolder defaultFolder;
   private IMAPStore imapStore;
@@ -69,17 +70,17 @@ class StoreIndexText {
   @Test
   void populateFromStore_storeHasFolders_ShouldPopulateIndex() throws Exception {
     // Given
-    final StoreIndex storeIndex = new StoreIndex();
+    final Index index = new Index();
     doReturn(1).when(defaultFolder).getMessageCount();
     // When
-    StoreIndex.populateFromStore(storeIndex, imapStore, 1);
+    populateFromStore(index, imapStore, 1);
     // Then
     verify(defaultFolder, times(1)).expunge();
-    assertThat(storeIndex.containsFolder("INBOX"), equalTo(true));
-    assertThat(storeIndex.containsFolder("Folder 1"), equalTo(true));
-    assertThat(storeIndex.containsFolder("Folder 2"), equalTo(true));
-    assertThat(storeIndex.getCrawlExceptions(), empty());
-    assertThat(storeIndex.hasCrawlException(), equalTo(false));
+    assertThat(index.containsFolder("INBOX"), equalTo(true));
+    assertThat(index.containsFolder("Folder 1"), equalTo(true));
+    assertThat(index.containsFolder("Folder 2"), equalTo(true));
+    assertThat(index.getCrawlExceptions(), empty());
+    assertThat(index.hasCrawlException(), equalTo(false));
   }
 
   private static IMAPFolder mockFolder(String name) throws MessagingException {
