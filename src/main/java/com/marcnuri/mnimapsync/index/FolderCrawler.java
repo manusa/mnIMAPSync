@@ -14,14 +14,13 @@
  * limitations under the License.
  *
  */
-package com.marcnuri.mnimapsync.store;
+package com.marcnuri.mnimapsync.index;
 
-import com.sun.mail.imap.IMAPMessage;
-import com.sun.mail.imap.IMAPStore;
 import javax.mail.FetchProfile;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Store;
 
 /**
  *
@@ -29,23 +28,24 @@ import javax.mail.MessagingException;
  */
 public final class FolderCrawler implements Runnable {
 
-    private final IMAPStore store;
+    private final Store store;
     private final String folderName;
     private final int start;
     private final int end;
-    private final StoreIndex storeIndex;
+    private final Index index;
 
-    protected FolderCrawler(IMAPStore store, String folderName, int start, int end,
-            StoreIndex storeIndex) {
+    protected FolderCrawler(Store store, String folderName, int start, int end,
+            Index index) {
         this.store = store;
         this.folderName = folderName;
         this.start = start;
         this.end = end;
-        this.storeIndex = storeIndex;
+        this.index = index;
     }
 
     public void run() {
-        long indexedMessages = 0L, skippedMessages = 0L;
+        long indexedMessages = 0L;
+        long skippedMessages = 0L;
         try {
             final Folder folder = store.getFolder(folderName);
             folder.open(Folder.READ_ONLY);
@@ -53,12 +53,12 @@ public final class FolderCrawler implements Runnable {
             folder.fetch(messages, MessageId.addHeaders(new FetchProfile()));
             for (Message message : messages) {
                 //Don't bother crawling if index has exceptions. Process won't continue
-                if (storeIndex.hasCrawlException()) {
+                if (index.hasCrawlException()) {
                     return;
                 }
                 try {
-                    final MessageId messageId = new MessageId((IMAPMessage) message);
-                    if (storeIndex.getFolderMessages(folderName).add(messageId)) {
+                    final MessageId messageId = new MessageId(message);
+                    if (index.getFolderMessages(folderName).add(messageId)) {
                         indexedMessages++;
                     } else {
                         skippedMessages++;
@@ -72,9 +72,9 @@ public final class FolderCrawler implements Runnable {
             }
             folder.close(false);
         } catch (MessagingException messagingException) {
-            storeIndex.getCrawlExceptions().add(messagingException);
+            index.getCrawlExceptions().add(messagingException);
         }
-        storeIndex.updatedIndexedMessageCount(indexedMessages);
-        storeIndex.updatedSkippedMessageCount(skippedMessages);
+        index.updatedIndexedMessageCount(indexedMessages);
+        index.updatedSkippedMessageCount(skippedMessages);
     }
 }

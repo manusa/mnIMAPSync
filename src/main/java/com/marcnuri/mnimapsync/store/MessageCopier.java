@@ -16,6 +16,8 @@
  */
 package com.marcnuri.mnimapsync.store;
 
+import com.marcnuri.mnimapsync.index.Index;
+import com.marcnuri.mnimapsync.index.MessageId;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPMessage;
 import java.util.ArrayList;
@@ -114,7 +116,7 @@ public final class MessageCopier implements Runnable {
             sourceFolder.close(false);
         } catch (MessagingException messagingException) {
             storeCopier.getCopyExceptions().add(messagingException);
-            Logger.getLogger(StoreIndex.class.getName()).log(Level.SEVERE, null,
+            Logger.getLogger(Index.class.getName()).log(Level.SEVERE, null,
                     messagingException);
         }
         storeCopier.updatedMessagesCopiedCount(copied);

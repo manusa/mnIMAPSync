@@ -21,13 +21,13 @@
 package com.marcnuri.mnimapsync.store;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 import javax.mail.Folder;
@@ -39,12 +39,12 @@ import org.mockito.Mockito;
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-18.
  */
-public class StoreCopierTest {
+class StoreCopierTest {
 
   private IMAPFolder imapFolder;
   private IMAPStore imapStore;
-  private StoreIndex sourceIndex;
-  private StoreIndex targetIndex;
+  private Index sourceIndex;
+  private Index targetIndex;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -56,8 +56,10 @@ public class StoreCopierTest {
     imapStore = Mockito.mock(IMAPStore.class);
     doReturn(imapFolder).when(imapStore).getFolder(anyString());
     doReturn(imapFolder).when(imapStore).getDefaultFolder();
-    sourceIndex = Mockito.spy(new StoreIndex());
-    targetIndex = Mockito.spy(new StoreIndex());
+    sourceIndex = Mockito.spy(new Index());
+    sourceIndex.setFolderSeparator(".");
+    targetIndex = Mockito.spy(new Index());
+    targetIndex.setFolderSeparator("_");
   }
 
   @AfterEach
@@ -80,14 +82,14 @@ public class StoreCopierTest {
     assertThat(storeCopier.hasCopyException(), equalTo(false));
     assertThat(storeCopier.getFoldersCopiedCount(), equalTo(1));
     assertThat(storeCopier.getFoldersSkippedCount(), equalTo(0));
-    assertThat(sourceIndex.getFolders(), containsInRelativeOrder(equalTo("INBOX")));
+    assertThat(sourceIndex.containsFolder("INBOX"), equalTo(true));
   }
 
   @Test
   void copy_targetContainsCurrentFolder_shouldNotCopyFoldersAndMessages() throws Exception {
     // Given
     doReturn(true).when(imapFolder).create(eq(Folder.HOLDS_MESSAGES | Folder.HOLDS_FOLDERS));
-    targetIndex.getFolders().add("INBOX");
+    targetIndex.addFolder("INBOX");
     final StoreCopier storeCopier = new StoreCopier(imapStore, sourceIndex, imapStore, targetIndex, 1);
     // When
     storeCopier.copy();
@@ -96,6 +98,6 @@ public class StoreCopierTest {
     assertThat(storeCopier.hasCopyException(), equalTo(false));
     assertThat(storeCopier.getFoldersCopiedCount(), equalTo(0));
     assertThat(storeCopier.getFoldersSkippedCount(), equalTo(1));
-    assertThat(sourceIndex.getFolders(), containsInRelativeOrder(equalTo("INBOX")));
+    assertThat(sourceIndex.containsFolder("INBOX"), equalTo(true));
   }
 }

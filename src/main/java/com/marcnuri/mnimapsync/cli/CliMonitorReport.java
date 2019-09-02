@@ -23,7 +23,7 @@ package com.marcnuri.mnimapsync.cli;
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
-import com.marcnuri.mnimapsync.store.StoreIndex;
+import com.marcnuri.mnimapsync.index.Index;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
@@ -49,7 +49,7 @@ public class CliMonitorReport extends CliReport {
 
 
   private static Map<String, String> initTemplateVariables(MNIMAPSync syncInstance) {
-    final StoreIndex targetIndex = syncInstance.getTargetIndex();
+    final Index targetIndex = syncInstance.getTargetIndex();
     final StoreCopier sourceCopier = syncInstance.getSourceCopier();
     final StoreDeleter targetDeleter = syncInstance.getTargetDeleter();
     final Map<String, String> variables = new HashMap<>();

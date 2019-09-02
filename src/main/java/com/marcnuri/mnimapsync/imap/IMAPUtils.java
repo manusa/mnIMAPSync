@@ -21,10 +21,12 @@
 package com.marcnuri.mnimapsync.imap;
 
 import com.marcnuri.mnimapsync.HostDefinition;
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPSSLStore;
 import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.util.MailSSLSocketFactory;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 import java.util.Properties;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -33,6 +35,8 @@ import javax.mail.Session;
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
  */
 public class IMAPUtils {
+
+  public static final String INBOX_MAILBOX = "INBOX";
 
   private static MailSSLSocketFactory mailSSLSocketFactory;
 
@@ -77,5 +81,29 @@ public class IMAPUtils {
     ret.connect(hostDefinition.getHost(), hostDefinition.getPort(), hostDefinition.getUser(),
         hostDefinition.getPassword());
     return ret;
+  }
+
+  private static Optional<String> translateInbox(String folderName, String inboxName) {
+    if (INBOX_MAILBOX.equalsIgnoreCase(folderName)) {
+      return Optional.ofNullable(inboxName);
+    }
+    return Optional.empty();
+  }
+
+  private static String translateFolder(String folderName, Index sourceIndex, Index targetIndex) {
+    return folderName.replace(sourceIndex.getFolderSeparator(), targetIndex.getFolderSeparator());
+  }
+
+  public static String sourceFolderNameToTarget(String sourceFolderFullName,
+      Index sourceIndex, Index targetIndex) {
+
+    return translateInbox(sourceFolderFullName, targetIndex.getInbox())
+        .orElse(translateFolder(sourceFolderFullName, sourceIndex, targetIndex));
+  }
+  public static String targetToSourceFolderName(String targetFolderFullName,
+      Index sourceIndex, Index targetIndex) {
+
+    return translateInbox(targetFolderFullName, sourceIndex.getInbox())
+        .orElse(translateFolder(targetFolderFullName, targetIndex, sourceIndex));
   }
 }

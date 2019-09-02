@@ -14,10 +14,9 @@
  * limitations under the License.
  *
  */
-package com.marcnuri.mnimapsync.store;
+package com.marcnuri.mnimapsync.index;
 
 import com.sun.mail.imap.IMAPFolder;
-import com.sun.mail.imap.IMAPMessage;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +26,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.mail.FetchProfile;
+import javax.mail.Message;
 import javax.mail.MessagingException;
 
 /**
@@ -45,7 +45,7 @@ public class MessageId implements Serializable {
     private static final String HEADER_TO = "To";
     private static final Pattern emailPattern = Pattern.compile(
             "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}");
-    private final String messageId;
+    private final String messageIdHeader;
     private final String[] from;
     private final String[] to;
     private final String subject;
@@ -60,13 +60,13 @@ public class MessageId implements Serializable {
      * It's a pity because fetching all of the HEADERS is a performance HOG
      *
      * @param message
-     * @throws com.marcnuri.mnimapsync.store.MessageId.MessageIdException
+     * @throws MessageId.MessageIdException
      */
-    public MessageId(IMAPMessage message) throws MessageIdException {
+    public MessageId(Message message) throws MessageIdException {
         try {
             final String[] idHeader = message.getHeader(HEADER_MESSAGE_ID);
             final String[] subjectHeader = message.getHeader(HEADER_SUBJECT);
-            this.messageId = idHeader != null && idHeader.length > 0
+            this.messageIdHeader = idHeader != null && idHeader.length > 0
                     ? idHeader[0].trim().replaceAll("[^a-zA-Z0-9\\\\.\\\\-\\\\@]", "")
                     : "";
             //Irregular mails have more than one header for From or To fields
@@ -78,7 +78,7 @@ public class MessageId implements Serializable {
             this.subject = subjectHeader != null && subjectHeader.length > 0
                     ? subjectHeader[0].replaceAll("[^a-zA-Z0-9\\\\.\\\\-]", "")
                     : "";
-            if (this.messageId.equals("") && subject.equals("")) {
+            if (this.messageIdHeader.equals("") && subject.equals("")) {
                 throw new MessageIdException("No good fields for Id", null);
             }
         } catch (MessagingException messagingException) {
@@ -95,7 +95,7 @@ public class MessageId implements Serializable {
             return false;
         }
         MessageId messageId1 = (MessageId) o;
-        return Objects.equals(messageId, messageId1.messageId) &&
+        return Objects.equals(messageIdHeader, messageId1.messageIdHeader) &&
             Arrays.equals(from, messageId1.from) &&
             Arrays.equals(to, messageId1.to) &&
             Objects.equals(subject, messageId1.subject);
@@ -103,7 +103,7 @@ public class MessageId implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(messageId, subject);
+        int result = Objects.hash(messageIdHeader, subject);
         result = 31 * result + Arrays.hashCode(from);
         result = 31 * result + Arrays.hashCode(to);
         return result;
@@ -137,7 +137,7 @@ public class MessageId implements Serializable {
      * @param fetchProfile
      * @return
      */
-    static FetchProfile addHeaders(FetchProfile fetchProfile) {
+    public static FetchProfile addHeaders(FetchProfile fetchProfile) {
         fetchProfile.add(FetchProfile.Item.ENVELOPE);
         //Some servers respond to get a header request with a partial response of the header
         //when hMailServer is fetched for To or From, it returns only the first entry,

@@ -27,9 +27,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.marcnuri.mnimapsync.MNIMAPSync;
+import com.marcnuri.mnimapsync.index.Index;
 import com.marcnuri.mnimapsync.store.StoreCopier;
 import com.marcnuri.mnimapsync.store.StoreDeleter;
-import com.marcnuri.mnimapsync.store.StoreIndex;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -41,8 +41,8 @@ class CliMonitorReportTest {
   void getMonitorReportAsText_nullStores_shouldPrintEmptyReport() throws Exception {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
-    final StoreIndex storeIndex = mock(StoreIndex.class);
-    doReturn(storeIndex).when(syncInstance).getTargetIndex();
+    final Index index = mock(Index.class);
+    doReturn(index).when(syncInstance).getTargetIndex();
     // When
     final String result = getMonitorReportAsText(syncInstance);
     // Then
@@ -53,10 +53,10 @@ class CliMonitorReportTest {
   void getMonitorReportAsText_validCopierAndNullDeleter_shouldPrintCopyReport() throws Exception {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
-    final StoreIndex storeIndex = mock(StoreIndex.class);
-    doReturn(storeIndex).when(syncInstance).getTargetIndex();
-    doReturn(0L).when(storeIndex).getIndexedMessageCount();
-    doReturn(1337L).when(storeIndex).getSkippedMessageCount();
+    final Index index = mock(Index.class);
+    doReturn(index).when(syncInstance).getTargetIndex();
+    doReturn(0L).when(index).getIndexedMessageCount();
+    doReturn(1337L).when(index).getSkippedMessageCount();
     final StoreCopier storeCopier = mock(StoreCopier.class);
     doReturn(storeCopier).when(syncInstance).getSourceCopier();
     doReturn(1L).when(storeCopier).getMessagesCopiedCount();
@@ -72,10 +72,10 @@ class CliMonitorReportTest {
   void getMonitorReportAsText_validCopierAndDeleter_shouldPrintCopyAndDeleteReport() throws Exception {
     // Given
     final MNIMAPSync syncInstance = mock(MNIMAPSync.class);
-    final StoreIndex storeIndex = mock(StoreIndex.class);
-    doReturn(storeIndex).when(syncInstance).getTargetIndex();
-    doReturn(0L).when(storeIndex).getIndexedMessageCount();
-    doReturn(1337L).when(storeIndex).getSkippedMessageCount();
+    final Index index = mock(Index.class);
+    doReturn(index).when(syncInstance).getTargetIndex();
+    doReturn(0L).when(index).getIndexedMessageCount();
+    doReturn(1337L).when(index).getSkippedMessageCount();
     final StoreCopier storeCopier = mock(StoreCopier.class);
     doReturn(storeCopier).when(syncInstance).getSourceCopier();
     doReturn(1L).when(storeCopier).getMessagesCopiedCount();

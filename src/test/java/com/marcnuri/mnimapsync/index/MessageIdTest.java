@@ -18,7 +18,7 @@
  * limitations under the License.
  *
  */
-package com.marcnuri.mnimapsync.store;
+package com.marcnuri.mnimapsync.index;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 
-import com.marcnuri.mnimapsync.store.MessageId.MessageIdException;
+import com.marcnuri.mnimapsync.index.MessageId.MessageIdException;
 import com.sun.mail.imap.IMAPMessage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

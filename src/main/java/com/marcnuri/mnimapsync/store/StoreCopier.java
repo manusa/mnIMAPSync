@@ -16,7 +16,10 @@
  */
 package com.marcnuri.mnimapsync.store;
 
+import static com.marcnuri.mnimapsync.imap.IMAPUtils.sourceFolderNameToTarget;
+
 import com.marcnuri.mnimapsync.MNIMAPSync;
+import com.marcnuri.mnimapsync.index.Index;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 import java.util.ArrayList;
@@ -41,11 +44,9 @@ public final class StoreCopier {
 
     private final ExecutorService service;
     private final IMAPStore sourceStore;
-    private final char sourceSeparator;
     private final IMAPStore targetStore;
-    private final char targetSeparator;
-    private final StoreIndex sourceIndex;
-    private final StoreIndex targetIndex;
+    private final Index sourceIndex;
+    private final Index targetIndex;
     private final AtomicInteger foldersCopiedCount;
     private final AtomicInteger foldersSkippedCount;
     private final AtomicLong messagesCopiedCount;
@@ -53,13 +54,11 @@ public final class StoreCopier {
     //If no empty, we shouldn't allow deletion
     private final List<MessagingException> copyExceptions;
 
-    public StoreCopier(IMAPStore sourceStore, StoreIndex sourceIndex, IMAPStore targetStore,
-            StoreIndex targetIndex, int threads) throws MessagingException {
+    public StoreCopier(IMAPStore sourceStore, Index sourceIndex, IMAPStore targetStore,
+            Index targetIndex, int threads) {
         this.sourceStore = sourceStore;
-        this.sourceSeparator = sourceStore.getDefaultFolder().getSeparator();
         this.sourceIndex = sourceIndex;
         this.targetStore = targetStore;
-        this.targetSeparator = targetStore.getDefaultFolder().getSeparator();
         this.targetIndex = targetIndex;
         service = Executors.newFixedThreadPool(threads);
         foldersCopiedCount = new AtomicInteger();
@@ -71,6 +70,8 @@ public final class StoreCopier {
 
     public final void copy() throws InterruptedException {
         try {
+            sourceIndex
+                .setFolderSeparator(String.valueOf(sourceStore.getDefaultFolder().getSeparator()));
             //Copy Folder Structure
             copySourceFolder(sourceStore.getDefaultFolder());
             //Copy messages
@@ -93,14 +94,14 @@ public final class StoreCopier {
      */
     private void copySourceFolder(Folder folder) throws MessagingException {
         final String sourceFolderName = folder.getFullName();
-        final String targetFolderName
-                = MNIMAPSync.translateFolderName(sourceSeparator, targetSeparator, sourceFolderName);
+        final String targetFolderName = sourceFolderNameToTarget(sourceFolderName, sourceIndex,
+            targetIndex);
         //Index for delete after copy (if necessary)
         if (sourceIndex != null) {
-            sourceIndex.getFolders().add(sourceFolderName);
+            sourceIndex.addFolder(sourceFolderName);
         }
         //Copy folder
-        if (!targetIndex.getFolders().contains(targetFolderName)) {
+        if (!targetIndex.containsFolder(targetFolderName)) {
             if (!targetStore.getFolder(targetFolderName).create(folder.getType())) {
                 throw new MessagingException(String.format(
                         "Couldn't create folder: %s in target server.", sourceFolderName));
@@ -127,9 +128,8 @@ public final class StoreCopier {
     private void copySourceMessages(IMAPFolder sourceFolder) throws MessagingException {
         if (sourceFolder != null) {
             final String sourceFolderName = sourceFolder.getFullName();
-            final String targetFolderName
-                    = MNIMAPSync.translateFolderName(sourceSeparator, targetSeparator,
-                            sourceFolderName);
+            final String targetFolderName = sourceFolderNameToTarget(sourceFolderName, sourceIndex,
+                targetIndex);
             if ((sourceFolder.getType() & Folder.HOLDS_MESSAGES) == Folder.HOLDS_MESSAGES) {
                 //Manage Servers with public/read only folders.
                 try {
@@ -206,7 +206,7 @@ public final class StoreCopier {
         return sourceStore;
     }
 
-    final StoreIndex getSourceIndex() {
+    final Index getSourceIndex() {
         return sourceIndex;
     }
 

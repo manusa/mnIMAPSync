@@ -18,7 +18,7 @@
  * limitations under the License.
  *
  */
-package com.marcnuri.mnimapsync.store;
+package com.marcnuri.mnimapsync.index;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,6 +31,9 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.marcnuri.mnimapsync.index.FolderCrawler;
+import com.marcnuri.mnimapsync.index.Index;
+import com.marcnuri.mnimapsync.index.MessageId;
 import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import javax.mail.Folder;
@@ -48,19 +51,19 @@ class FolderCrawlerTest {
 
   private IMAPStore imapStore;
   private Folder folder;
-  private StoreIndex storeIndex;
+  private Index index;
 
   @BeforeEach
   void setUp() throws Exception {
     imapStore = Mockito.mock(IMAPStore.class);
     folder = Mockito.mock(Folder.class);
     doReturn(folder).when(imapStore).getFolder(anyString());
-    storeIndex = Mockito.spy(new StoreIndex());
+    index = Mockito.spy(new Index());
   }
 
   @AfterEach
   void tearDown() {
-    storeIndex = null;
+    index = null;
     folder = null;
     imapStore = null;
   }
@@ -69,56 +72,56 @@ class FolderCrawlerTest {
   void run_emptyFolder_shouldOnlyUpdateIndexes() throws Exception {
     // Given
     final FolderCrawler folderCrawler = new FolderCrawler(
-        imapStore, "FolderName", 0, 100, storeIndex);
+        imapStore, "FolderName", 0, 100, index);
     doReturn(new Message[0]).when(folder).getMessages(eq(0), eq(100));
     // When
     folderCrawler.run();
     // Then
     verify(imapStore, times(1)).getFolder(eq("FolderName"));
-    verify(storeIndex, times(1)).updatedIndexedMessageCount(eq(0L));
-    verify(storeIndex, times(1)).updatedSkippedMessageCount(eq(0L));
+    verify(index, times(1)).updatedIndexedMessageCount(eq(0L));
+    verify(index, times(1)).updatedSkippedMessageCount(eq(0L));
   }
 
   @Test
   void run_notEmptyFolderAndStoreWithExceptions_shouldReturn() throws Exception {
     // Given
     final FolderCrawler folderCrawler = new FolderCrawler(
-        imapStore, "FolderName", 0, 100, storeIndex);
+        imapStore, "FolderName", 0, 100, index);
     final Message message = Mockito.mock(Message.class);
     doReturn(new Message[]{message}).when(folder).getMessages(eq(0), eq(100));
-    doReturn(true).when(storeIndex).hasCrawlException();
+    doReturn(true).when(index).hasCrawlException();
     // When
     folderCrawler.run();
     // Then
     verify(imapStore, times(1)).getFolder(eq("FolderName"));
-    verify(storeIndex, times(0)).updatedIndexedMessageCount(anyLong());
-    verify(storeIndex, times(0)).updatedSkippedMessageCount(anyLong());
+    verify(index, times(0)).updatedIndexedMessageCount(anyLong());
+    verify(index, times(0)).updatedSkippedMessageCount(anyLong());
   }
 
   @Test
   void run_notEmptyFolderAndRepeatedMessages_shouldUpdateIndexes() throws Exception {
     // Given
     final FolderCrawler folderCrawler = new FolderCrawler(
-        imapStore, "FolderName", 0, 100, storeIndex);
+        imapStore, "FolderName", 0, 100, index);
     final IMAPMessage message = Mockito.mock(IMAPMessage.class);
     doReturn(new String[]{"1337"}).when(message).getHeader("Message-Id");
     final IMAPMessage repeatedMessage = Mockito.mock(IMAPMessage.class);
     doReturn(new String[]{"313373"}).when(repeatedMessage).getHeader("Message-Id");
-    storeIndex.getFolderMessages("FolderName").add(new MessageId(repeatedMessage));
+    index.getFolderMessages("FolderName").add(new MessageId(repeatedMessage));
     doReturn(new Message[]{message, repeatedMessage}).when(folder).getMessages(eq(0), eq(100));
     // When
     folderCrawler.run();
     // Then
     verify(imapStore, times(1)).getFolder(eq("FolderName"));
-    assertThat(storeIndex.getIndexedMessageCount(), equalTo(1L));
-    assertThat(storeIndex.getSkippedMessageCount(), equalTo(1L));
+    assertThat(index.getIndexedMessageCount(), equalTo(1L));
+    assertThat(index.getSkippedMessageCount(), equalTo(1L));
   }
 
   @Test
   void run_notEmptyFolderAndThrowsMessageIdExceptionWithCause_shouldUpdateIndexesAndAddCrawlException() throws Exception {
     // Given
     final FolderCrawler folderCrawler = new FolderCrawler(
-        imapStore, "FolderName", 0, 100, storeIndex);
+        imapStore, "FolderName", 0, 100, index);
     final IMAPMessage message = Mockito.mock(IMAPMessage.class);
     doThrow(new MessagingException()).when(message).getHeader("Message-Id");
     doReturn(new Message[]{message}).when(folder).getMessages(eq(0), eq(100));
@@ -126,12 +129,12 @@ class FolderCrawlerTest {
     folderCrawler.run();
     // Then
     verify(imapStore, times(1)).getFolder(eq("FolderName"));
-    verify(storeIndex, times(1)).updatedIndexedMessageCount(eq(0L));
-    verify(storeIndex, times(1)).updatedSkippedMessageCount(eq(0L));
-    assertThat(storeIndex.getIndexedMessageCount(), equalTo(0L));
-    assertThat(storeIndex.getSkippedMessageCount(), equalTo(0L));
-    assertThat(storeIndex.hasCrawlException(), equalTo(true));
-    assertThat(storeIndex.getCrawlExceptions(), hasSize(1));
+    verify(index, times(1)).updatedIndexedMessageCount(eq(0L));
+    verify(index, times(1)).updatedSkippedMessageCount(eq(0L));
+    assertThat(index.getIndexedMessageCount(), equalTo(0L));
+    assertThat(index.getSkippedMessageCount(), equalTo(0L));
+    assertThat(index.hasCrawlException(), equalTo(true));
+    assertThat(index.getCrawlExceptions(), hasSize(1));
   }
 
 }
