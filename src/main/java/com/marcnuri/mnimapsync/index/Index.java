@@ -32,8 +32,8 @@ import javax.mail.MessagingException;
  */
 public class Index {
 
-    private AtomicReference<String> folderSeparator;
-    private AtomicReference<String> inbox;
+    private final AtomicReference<String> folderSeparator;
+    private final AtomicReference<String> inbox;
     private final Set<String> folders;
     private final Map<String, Set<MessageId>> folderMessages;
     private final AtomicLong indexedMessageCount;

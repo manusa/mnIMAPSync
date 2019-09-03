@@ -71,7 +71,7 @@ public final class MessageCopier implements Runnable {
             final List<Message> toCopy = new ArrayList<>();
             for (Message message : sourceMessages) {
                 try {
-                    final MessageId id = new MessageId((IMAPMessage) message);
+                    final MessageId id = new MessageId(message);
                     //Index message for deletion (if necessary)
                     if (storeCopier.getSourceIndex() != null) {
                         storeCopier.getSourceIndex().getFolderMessages(sourceFolderName).add(id);
@@ -93,13 +93,13 @@ public final class MessageCopier implements Runnable {
                 fullProfile.add(FetchProfile.Item.FLAGS);
                 fullProfile.add(IMAPFolder.FetchProfileItem.HEADERS);
                 fullProfile.add(FetchProfile.Item.SIZE);
-                sourceFolder.fetch(toCopy.toArray(new Message[toCopy.size()]), fullProfile);
+                sourceFolder.fetch(toCopy.toArray(new Message[0]), fullProfile);
                 final Folder targetFolder = storeCopier.getTargetStore().getFolder(targetFolderName);
                 targetFolder.open(Folder.READ_WRITE);
                 for (Message message : toCopy) {
                     targetFolder.appendMessages(new Message[]{message});
                     try {
-                        targetFolderMessages.add(new MessageId((IMAPMessage) message));
+                        targetFolderMessages.add(new MessageId(message));
                         copied++;
                         if (copied % updateCount == 0) {
                             storeCopier.updatedMessagesCopiedCount(copied);

@@ -38,6 +38,7 @@ import javax.mail.MessagingException;
  *
  * @author Marc Nuri <marc@marcnuri.com>
  */
+@SuppressWarnings("WeakerAccess")
 public class MNIMAPSync {
 
     static final int THREADS = 5;
@@ -120,7 +121,7 @@ public class MNIMAPSync {
             indexTargetStore();
             copySourceToTarget();
             //Delete only if source store was completely indexed (this happens if no exceptions where raised)
-            if (syncOptions.getDelete() && sourceIndex != null && !sourceCopier.hasCopyException()) {
+            if (syncOptions.getDelete() && !sourceCopier.hasCopyException()) {
                 deleteFromTarget();
             }
         } catch (MessagingException | GeneralSecurityException ex) {
