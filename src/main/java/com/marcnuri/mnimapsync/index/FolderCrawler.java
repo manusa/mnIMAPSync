@@ -72,7 +72,7 @@ public final class FolderCrawler implements Runnable {
             }
             folder.close(false);
         } catch (MessagingException messagingException) {
-            index.getCrawlExceptions().add(messagingException);
+            index.addCrawlException(messagingException);
         }
         index.updatedIndexedMessageCount(indexedMessages);
         index.updatedSkippedMessageCount(skippedMessages);

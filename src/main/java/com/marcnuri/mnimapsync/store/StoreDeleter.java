@@ -20,7 +20,6 @@ import static com.marcnuri.mnimapsync.imap.IMAPUtils.targetToSourceFolderName;
 
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.marcnuri.mnimapsync.index.Index;
-import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,7 +64,7 @@ public class StoreDeleter {
             //Delete Folder Structure
             deleteTargetFolder(targetStore.getDefaultFolder());
             //Copy messages
-            deleteTargetMessages((IMAPFolder) targetStore.getDefaultFolder());
+            deleteTargetMessages(targetStore.getDefaultFolder());
         } catch (MessagingException ex) {
             Logger.getLogger(StoreDeleter.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -73,7 +72,7 @@ public class StoreDeleter {
         service.awaitTermination(1, TimeUnit.DAYS);
     }
 
-    private void deleteTargetMessages(IMAPFolder targetFolder) throws MessagingException {
+    private void deleteTargetMessages(Folder targetFolder) throws MessagingException {
         if (targetFolder != null) {
             final String targetFolderName = targetFolder.getFullName();
             final String sourceFolderName = targetToSourceFolderName(targetFolderName, sourceIndex, targetIndex);
@@ -98,7 +97,7 @@ public class StoreDeleter {
             //Folder recursion. Get all children
             if ((targetFolder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
                 for (Folder child : targetFolder.list()) {
-                    deleteTargetMessages((IMAPFolder) child);
+                    deleteTargetMessages(child);
                 }
             }
         }
@@ -111,7 +110,7 @@ public class StoreDeleter {
         if (!sourceIndex.containsFolder(sourceFolderName)) {
             //Delete recursively
             targetStore.getFolder(targetFolderName).delete(true);
-            updatedFoldersDeletedCount(1);
+            incrementFoldersDeletedCount();
         }
         //Folder recursion. Get all children
         if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
@@ -121,8 +120,8 @@ public class StoreDeleter {
         }
     }
 
-    private void updatedFoldersDeletedCount(int delta) {
-        foldersDeletedCount.getAndAdd(delta);
+    private void incrementFoldersDeletedCount() {
+        foldersDeletedCount.getAndAdd(1);
     }
 
     protected final void updatedMessagesDeletedCount(long delta) {

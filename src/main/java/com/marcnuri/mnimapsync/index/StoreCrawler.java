@@ -53,7 +53,7 @@ public class StoreCrawler {
     service.shutdown();
     service.awaitTermination(1, TimeUnit.HOURS);
     if (index.hasCrawlException()) {
-      messagingException = index.getCrawlExceptions().get(0);
+      messagingException = index.getCrawlExceptions().iterator().next();
     }
     if (messagingException != null) {
       throw messagingException;

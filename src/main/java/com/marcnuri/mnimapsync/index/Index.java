@@ -18,11 +18,7 @@ package com.marcnuri.mnimapsync.index;
 
 import static com.marcnuri.mnimapsync.imap.IMAPUtils.INBOX_MAILBOX;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,29 +32,27 @@ import javax.mail.MessagingException;
  */
 public class Index {
 
-    private AtomicReference<String> folderSeparator;
-    private AtomicReference<String> inbox;
+    private final AtomicReference<String> folderSeparator;
+    private final AtomicReference<String> inbox;
     private final Set<String> folders;
     private final Map<String, Set<MessageId>> folderMessages;
     private final AtomicLong indexedMessageCount;
     private final AtomicLong skippedMessageCount;
     //If no empty, the other processes shouldn't continue
-    private final List<MessagingException> crawlExceptions;
+    private final Set<MessagingException> crawlExceptions;
 
     public Index() {
         this.folderSeparator = new AtomicReference<>();
         this.inbox = new AtomicReference<>();
         this.folders = ConcurrentHashMap.newKeySet();
-        this.folderMessages = Collections.synchronizedMap(new HashMap<>());
+        this.folderMessages = new ConcurrentHashMap<>();
         this.indexedMessageCount = new AtomicLong();
         this.skippedMessageCount = new AtomicLong();
-        this.crawlExceptions = Collections.synchronizedList(new ArrayList<>());
+        this.crawlExceptions = ConcurrentHashMap.newKeySet();
     }
 
     public final boolean hasCrawlException() {
-        synchronized (crawlExceptions) {
-            return !crawlExceptions.isEmpty();
-        }
+        return !crawlExceptions.isEmpty();
     }
 
     public final void updatedIndexedMessageCount(long delta) {
@@ -104,17 +98,16 @@ public class Index {
         return skippedMessageCount.longValue();
     }
 
-    public synchronized Set<MessageId> getFolderMessages(String folder) {
-        synchronized (folderMessages) {
-            if (!folderMessages.containsKey(folder)) {
-                folderMessages.put(folder, Collections.synchronizedSet(new HashSet<>()));
-            }
-            return folderMessages.get(folder);
-        }
+    public Set<MessageId> getFolderMessages(String folder) {
+        return folderMessages.computeIfAbsent(folder, k -> ConcurrentHashMap.newKeySet());
     }
 
-    public final synchronized List<MessagingException> getCrawlExceptions() {
-        return crawlExceptions;
+    final void addCrawlException(MessagingException exception) {
+        crawlExceptions.add(exception);
+    }
+
+    public final Set<MessagingException> getCrawlExceptions() {
+        return Collections.unmodifiableSet(crawlExceptions);
     }
 
 

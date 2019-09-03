@@ -58,9 +58,6 @@ public class MessageId implements Serializable {
      * will duplicate.
      *
      * It's a pity because fetching all of the HEADERS is a performance HOG
-     *
-     * @param message
-     * @throws MessageId.MessageIdException
      */
     public MessageId(Message message) throws MessageIdException {
         try {
@@ -111,9 +108,6 @@ public class MessageId implements Serializable {
 
     /**
      * Really important. Different servers return different address values when they are invalid.
-     *
-     * @param addresses
-     * @return
      */
     private static String[] parseAddress(String[] addresses) {
         if (addresses != null) {
@@ -125,7 +119,7 @@ public class MessageId implements Serializable {
                 }
             }
             Collections.sort(ret);
-            return ret.toArray(new String[ret.size()]);
+            return ret.toArray(new String[0]);
         }
         return new String[0];
     }
@@ -133,9 +127,6 @@ public class MessageId implements Serializable {
 
     /**
      * Adds required headers to fetch profile
-     *
-     * @param fetchProfile
-     * @return
      */
     public static FetchProfile addHeaders(FetchProfile fetchProfile) {
         fetchProfile.add(FetchProfile.Item.ENVELOPE);

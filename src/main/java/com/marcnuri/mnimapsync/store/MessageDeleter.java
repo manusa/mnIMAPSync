@@ -18,7 +18,6 @@ package com.marcnuri.mnimapsync.store;
 
 import com.marcnuri.mnimapsync.index.Index;
 import com.marcnuri.mnimapsync.index.MessageId;
-import com.sun.mail.imap.IMAPMessage;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,7 +52,8 @@ public final class MessageDeleter implements Runnable {
     }
 
     public void run() {
-        long deleted = 0L, skipped = 0L;
+        long deleted = 0L;
+        long skipped = 0L;
         try {
             final Folder targetFolder = storeDeleter.getTargetStore().getFolder(targetFolderName);
             //Opens a new connection per Thread
@@ -62,7 +62,7 @@ public final class MessageDeleter implements Runnable {
             targetFolder.fetch(targetMessages, MessageId.addHeaders(new FetchProfile()));
             for (Message message : targetMessages) {
                 try {
-                    final MessageId id = new MessageId((IMAPMessage) message);
+                    final MessageId id = new MessageId(message);
                     if (!sourceFolderMessages.contains(id)) {
                         message.setFlag(Flags.Flag.DELETED, true);
                         deleted++;

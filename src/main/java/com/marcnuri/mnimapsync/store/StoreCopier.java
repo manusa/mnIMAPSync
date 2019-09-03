@@ -88,9 +88,6 @@ public final class StoreCopier {
      *
      * It also indexes the source store folders if we want to delete target folders that no longer
      * exist
-     *
-     * @param folder
-     * @throws MessagingException
      */
     private void copySourceFolder(Folder folder) throws MessagingException {
         final String sourceFolderName = folder.getFullName();
@@ -106,9 +103,9 @@ public final class StoreCopier {
                 throw new MessagingException(String.format(
                         "Couldn't create folder: %s in target server.", sourceFolderName));
             }
-            updatedFoldersCopiedCount(1);
+            incrementFoldersCopiedCount();
         } else {
-            updatedFoldersSkippedCount(1);
+            incrementFoldersSkippedCount();
         }
         //Folder recursion. Get all children
         if ((folder.getType() & Folder.HOLDS_FOLDERS) == Folder.HOLDS_FOLDERS) {
@@ -121,9 +118,6 @@ public final class StoreCopier {
     /**
      * Once the folder structure has been created it copies messages recursively from the root
      * folder.
-     *
-     * @param sourceFolder
-     * @throws MessagingException
      */
     private void copySourceMessages(IMAPFolder sourceFolder) throws MessagingException {
         if (sourceFolder != null) {
@@ -170,12 +164,12 @@ public final class StoreCopier {
         }
     }
 
-    private void updatedFoldersCopiedCount(int delta) {
-        foldersCopiedCount.getAndAdd(delta);
+    private void incrementFoldersCopiedCount() {
+        foldersCopiedCount.getAndAdd(1);
     }
 
-    private void updatedFoldersSkippedCount(int delta) {
-        foldersSkippedCount.getAndAdd(delta);
+    private void incrementFoldersSkippedCount() {
+        foldersSkippedCount.getAndAdd(1);
     }
 
     protected final void updatedMessagesCopiedCount(long delta) {
