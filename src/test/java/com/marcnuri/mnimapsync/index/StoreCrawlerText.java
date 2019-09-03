@@ -24,6 +24,8 @@ import static com.marcnuri.mnimapsync.index.StoreCrawler.populateFromStore;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -68,7 +70,7 @@ class StoreCrawlerText {
   }
 
   @Test
-  void populateFromStore_storeHasFolders_ShouldPopulateIndex() throws Exception {
+  void populateFromStore_storeHasFolders_shouldPopulateIndex() throws Exception {
     // Given
     final Index index = new Index();
     doReturn(1).when(defaultFolder).getMessageCount();
@@ -81,6 +83,26 @@ class StoreCrawlerText {
     assertThat(index.containsFolder("Folder 2"), equalTo(true));
     assertThat(index.getCrawlExceptions(), empty());
     assertThat(index.hasCrawlException(), equalTo(false));
+  }
+
+  @Test
+  void populateFromStore_indexHasExceptionsAndStoreHasFolders_shouldThrowException() throws Exception {
+    // Given
+    final Index index = new Index();
+    index.addCrawlException(new MessagingException("Indexing tasks went wrong at some point"));
+    doReturn(1).when(defaultFolder).getMessageCount();
+    // When
+    final MessagingException result = assertThrows(MessagingException.class, () -> {
+      populateFromStore(index, imapStore, 1);
+      fail();
+    });
+    // Then
+    verify(defaultFolder, times(1)).expunge();
+    assertThat(index.containsFolder("INBOX"), equalTo(true));
+    assertThat(index.containsFolder("Folder 1"), equalTo(true));
+    assertThat(index.containsFolder("Folder 2"), equalTo(true));
+    assertThat(index.hasCrawlException(), equalTo(true));
+    assertThat(result.getMessage(), equalTo("Indexing tasks went wrong at some point"));
   }
 
   private static IMAPFolder mockFolder(String name) throws MessagingException {
