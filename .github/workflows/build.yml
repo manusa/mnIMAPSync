@@ -28,6 +28,6 @@ jobs:
         if: !startsWith( 'refs/pull', github.ref)
         with:
           name: marcnuri/mnimapsync
-          tag: ${{ github.ref.replace('refs/heads/', '').replace('refs/tags/', '') }}
+          tag: ${{ github.ref }}
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
