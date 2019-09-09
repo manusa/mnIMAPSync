@@ -25,9 +25,8 @@ jobs:
 #          -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
       - name: Dockerize
         uses: manusa/actions-publish-docker@master
-        if: !startsWith( 'refs/pull', github.ref)
         with:
           name: marcnuri/mnimapsync
-          tag: ${{ github.ref }}
+          tag: ${{ github.ref.replace('refs/heads', '').replace('refs/tags', '') }}
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
