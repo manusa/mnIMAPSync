@@ -25,7 +25,7 @@ jobs:
 #          -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
       - name: Compute Tag Name
         id: tagName
-        uses: actions/github-script@v0.2.0
+        uses: actions/github-script@0.2.0
         with:
           github-token: ${{github.token}}
           script: |
