@@ -23,10 +23,21 @@ jobs:
 #          -Dsonar.organization=manusa-github
 #          -Dsonar.host.url=https://sonarcloud.io
 #          -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
+      - name: Compute Tag Name
+        id: tagName
+        uses: actions/github-script@v0.2.0
+        with:
+          github-token: ${{github.token}}
+          script: |
+            console.log(context);
+            console.log(github);
+            console.log(github.ref);
+            return 'DELETE_JUST_A_TEST';
+
       - name: Dockerize
         uses: manusa/actions-publish-docker@master
         with:
           name: marcnuri/mnimapsync
-          tag: ${{ github.ref.replace('refs/heads', '').replace('refs/tags', '') }}
+          tag: ${{ steps.tagName.outputs.result }}
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
