@@ -24,6 +24,7 @@ jobs:
 #          -Dsonar.host.url=https://sonarcloud.io
 #          -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
       - name: Dockerize
+        if: success()
         uses: manusa/actions-publish-docker@master
         with:
           name: marcnuri/mnimapsync
