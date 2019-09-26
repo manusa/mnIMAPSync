@@ -1,6 +1,12 @@
 name: CI default
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - 'feature/*'
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -15,17 +21,17 @@ jobs:
           java-version: '11'
       - name: Gradle Build
         run: ./gradlew build
-#      - name: Sonar Analysis
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: ./gradlew sonarqube
-#          -Dsonar.projectKey=manusa_mnIMAPSync
-#          -Dsonar.organization=manusa-github
-#          -Dsonar.host.url=https://sonarcloud.io
-#          -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
+      - name: Sonar Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew sonarqube
+          -Dsonar.projectKey=manusa_mnIMAPSync
+          -Dsonar.organization=manusa-github
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }}
       - name: Dockerize
         if: success()
-        uses: manusa/actions-publish-docker@master
+        uses: manusa/actions-publish-docker@v1.0.1
         with:
           name: marcnuri/mnimapsync
           tag script: |
