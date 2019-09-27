@@ -6,4 +6,4 @@ LABEL MAINTAINER="Marc Nuri <marc@marcnuri.com>"
 
 COPY ./build/libs /opt
 
-ENTRYPOINT java -jar /opt/mnimapsync-all.jar
+ENTRYPOINT ["java", "-jar", "/opt/mnimapsync-all.jar"]
