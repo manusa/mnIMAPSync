@@ -45,6 +45,7 @@ jobs:
               .replace('refs/tags/', '')
               .replace('refs/pull/', '')
               .replace(/\//g, '_')
-              .replace(/#/g, '');
+              .replace(/#/g, '')
+              .replace(/^master$/, 'latest');
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
