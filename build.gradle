@@ -52,6 +52,8 @@ task fatJar(type: Jar, group: BasePlugin.BUILD_GROUP) {
             'Class-Path': configurations.runtime.files.collect { "$it.name" }.join(' ')
         )
     }
+    archiveBaseName = project.name
+    archiveVersion = ''
     archiveClassifier = 'all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
