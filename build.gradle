@@ -33,6 +33,9 @@ sourceCompatibility = 1.8
 mainClassName = 'com.marcnuri.mnimapsync.MNIMAPSync'
 
 test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
     jvmArgs "-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}"
     useJUnitPlatform()
     finalizedBy jacocoTestReport

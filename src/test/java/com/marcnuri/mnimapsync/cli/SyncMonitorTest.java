@@ -20,23 +20,8 @@
  */
 package com.marcnuri.mnimapsync.cli;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-
 import com.marcnuri.mnimapsync.MNIMAPSync;
 import com.marcnuri.mnimapsync.index.Index;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.logging.Formatter;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.StreamHandler;
 import mockit.Mock;
 import mockit.MockUp;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +29,23 @@ import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.StreamHandler;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 /**
  * Created by Marc Nuri <marc@marcnuri.com> on 2019-08-31.
@@ -95,7 +97,8 @@ class SyncMonitorTest {
     // When
     syncMonitor.run();
     // Then
-    Arrays.stream(Logger.getLogger(SyncMonitor.class.getName()).getHandlers()).forEach(s -> s.flush());
+    Arrays.stream(Logger.getLogger(SyncMonitor.class.getName()).getHandlers()).forEach(
+      Handler::flush);
     assertThat(outputBuffer.toString(StandardCharsets.UTF_8.name()), is("Everything is fine"));
   }
 
