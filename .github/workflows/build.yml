@@ -36,7 +36,7 @@ jobs:
         run: ./gradlew fatJar
       - name: Dockerize
         if: success()
-        uses: manusa/actions-publish-docker@v1.0.1
+        uses: manusa/actions-publish-docker@v1.1.0
         with:
           name: marcnuri/mnimapsync
           tag script: |

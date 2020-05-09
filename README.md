@@ -24,13 +24,13 @@ from java.
 - Java 1.5
 
 ## Releases
-- [0.0.3-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.3-alpha.zip)
-- [0.0.2-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.2-alpha.zip)
-- [0.0.1-alpha](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.1-alpha.zip)
+- [0.0.3-alpha](https://github.com/manusa/mnIMAPSync/releases/download/0.0.3-alpha/mnIMAPSync-0.0.3-alpha.zip)
+- [0.0.2-alpha](https://github.com/manusa/mnIMAPSync/releases/download/0.0.2-alpha/mnIMAPSync-0.0.2-alpha.zip)
+- [0.0.1-alpha](https://github.com/manusa/mnIMAPSync/releases/download/0.01-alpha/mnIMAPSync-0.0.1-alpha.zip)
 
 ## Usage
 The easiest way is to launch the program from the command-line interface.
-Download the [latest binary release](http://www.marcnuri.com/file/mnIMAPSync-release-0.0.3-alpha.zip)
+Download the [latest binary release](https://github.com/manusa/mnIMAPSync/releases/tag/v0.0.4)
  and execute as follows:
 
 ```Batchfile
