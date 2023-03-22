@@ -26,6 +26,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
+
 import com.marcnuri.mnimapsync.SyncOptions;
 import org.junit.jupiter.api.Test;
 
@@ -87,7 +89,7 @@ class ArgumentParserTest {
   }
 
   @Test
-  void parseCliArguments_validArgumentss_shouldReturnValidSyncOptions() {
+  void parseCliArguments_validArgumentss_shouldReturnValidSyncOptions() throws IOException {
     // Given
     final String[] arguments = new String[]{
         "--host1", "mail.source.com",

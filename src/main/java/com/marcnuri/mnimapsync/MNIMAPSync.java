@@ -21,18 +21,20 @@ import static com.marcnuri.mnimapsync.cli.CliSummaryReport.getSummaryReportAsTex
 import static com.marcnuri.mnimapsync.imap.IMAPUtils.openStore;
 import static com.marcnuri.mnimapsync.index.StoreCrawler.populateFromStore;
 
-import com.marcnuri.mnimapsync.cli.SyncMonitor;
-import com.marcnuri.mnimapsync.index.Index;
-import com.marcnuri.mnimapsync.store.StoreCopier;
-import com.marcnuri.mnimapsync.store.StoreDeleter;
-import com.sun.mail.imap.IMAPStore;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.mail.MessagingException;
+
+import com.marcnuri.mnimapsync.cli.SyncMonitor;
+import com.marcnuri.mnimapsync.index.Index;
+import com.marcnuri.mnimapsync.store.StoreCopier;
+import com.marcnuri.mnimapsync.store.StoreDeleter;
+import com.sun.mail.imap.IMAPStore;
 
 /**
  *
