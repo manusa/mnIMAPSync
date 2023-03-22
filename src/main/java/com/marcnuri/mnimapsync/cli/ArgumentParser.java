@@ -52,7 +52,7 @@ public class ArgumentParser {
     	Properties props = new Properties();
       FileInputStream fileInputStream = new FileInputStream(arguments[0]);
       props.load(fileInputStream);
-r
+
       result.getSourceHost().setHost(props.getProperty("host1"));
       result.getSourceHost().setPort(Integer.parseInt(props.getProperty("port1")));
       result.getSourceHost().setUser(props.getProperty("user1"));
